@@ -114,9 +114,12 @@ class LabeledDataset(torch.utils.data.Dataset):
         image_tensor = torch.stack(images)
 
         data_entries = self.annotation_dataframe[(self.annotation_dataframe['scene'] == scene_id) & (self.annotation_dataframe['sample'] == sample_id)]
-        corners = data_entries[['fl_x', 'fr_x', 'bl_x', 'br_x', 'fl_y', 'fr_y','bl_y', 'br_y']].to_numpy()
-        categories = data_entries.category_id.to_numpy()
-        
+        try: #my fix for old pandas version 
+            corners = data_entries[['fl_x', 'fr_x', 'bl_x', 'br_x', 'fl_y', 'fr_y','bl_y', 'br_y']].to_numpy()
+            categories = data_entries.category_id.to_numpy()
+        except: 
+            corners = data_entries[['fl_x', 'fr_x', 'bl_x', 'br_x', 'fl_y', 'fr_y','bl_y', 'br_y']].values
+            categories = data_entries.category_id.values
         ego_path = os.path.join(sample_path, 'ego.png')
         ego_image = Image.open(ego_path)
         ego_image = torchvision.transforms.functional.to_tensor(ego_image)
@@ -127,7 +130,11 @@ class LabeledDataset(torch.utils.data.Dataset):
         target['category'] = torch.as_tensor(categories)
 
         if self.extra_info:
-            actions = data_entries.action_id.to_numpy()
+            try: 
+                actions = data_entries.action_id.to_numpy()
+            except: 
+                actions = data_entries.action_id.values
+
             # You can change the binary_lane to False to get a lane with 
             lane_image = convert_map_to_lane_map(ego_image, binary_lane=True)
             
