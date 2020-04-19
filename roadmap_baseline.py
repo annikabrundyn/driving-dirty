@@ -109,8 +109,8 @@ class RoadMap(pl.LightningModule):
     def prepare_data(self):
         # here we download and transform the data but don't load them into dataloaders yet
         # the dataloaders are run batch by batch where this is run fully and once before beginning training
-        image_folder = 'data'
-        annotation_csv = 'data/annotation.csv'
+        image_folder = '../dat/data' #i had to update
+        annotation_csv = '../dat/data/annotation.csv'
 
         # split into train and validation - did this using scene indices but not sure if we want to split the
         # datasets at the scene folder level or at the sample level - could try both

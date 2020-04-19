@@ -3,12 +3,12 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=12
 #SBATCH --time=4:00:00
-#SBATCH --mem=128GB
+#SBATCH --mem=1GB
 ##SBATCH --gres=gpu:1
-#SBATCH --job-name=roadmap_baseline
+#SBATCH --job-name=test_email_from_noah
 #SBATCH --mail-type=END
-##SBATCH --mail-user=nsk367@nyu.edu
+#SBATCH --mail-user=fg476@nyu.edu
 #SBATCH --output=slurm_%j.out
 
 
-python roadmap_baseline.py
+python hello.py
