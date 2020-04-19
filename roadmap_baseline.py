@@ -16,6 +16,9 @@ from helper import collate_fn, draw_box
 
 import pytorch_lightning as pl
 
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
 
 class RoadMap(pl.LightningModule):
 
@@ -24,13 +27,14 @@ class RoadMap(pl.LightningModule):
 
         output_dim = 800*800
 
+        # pretrained feature extractor
         self.feature_extractor = models.resnet50(
                                     pretrained=True,
                                     num_classes=1000)
         self.feature_extractor.fc = Identity()
         self.feature_extractor.eval()
 
-        # use the pretrained model to predict binary roadmap
+        # FC layer to predict
         self.linear_1 = nn.Linear(2048, output_dim)
 
     def forward(self, x):
@@ -39,8 +43,7 @@ class RoadMap(pl.LightningModule):
         outputs = F.sigmoid(self.linear_1(representations))
         return outputs
 
-    def training_step(self, batch, batch_idx):
-        # REQUIRED
+    def _run_step(self, batch, batch_idx):
         sample, target, road_image = batch
 
         # change samples from tuple with length batch size containing 6x3xHxW to batch_sizex6x3xHxW
@@ -63,29 +66,28 @@ class RoadMap(pl.LightningModule):
         y = y.view(y.size(0), -1).float()
 
         loss = F.binary_cross_entropy(outputs, y)
+        return loss
 
+
+    def training_step(self, batch, batch_idx):
+        loss = self._run_step(batch, batch_idx)
         tensorboard_logs = {'train_loss': loss}
-
         return {'loss': loss, 'log': tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        # OPTIONAL
-        x, y = batch
-        y = torch.round(torch.rand(batch_size, 800*800))
-        y_hat = self.forward(x)
-        return {'val_loss': F.binary_cross_entropy(y_hat, y)}
+        loss = self._run_step(batch, batch_idx)
+        tensorboard_logs = {'val_loss': loss}
+        return {'val_loss': loss, 'log': tensorboard_logs}
 
     def validation_end(self, outputs):
-        # OPTIONAL
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {'val_loss': avg_loss}
         return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
 
     def test_step(self, batch, batch_idx):
-        # OPTIONAL
-        x, y = batch
-        y_hat = self.forward(x)
-        return {'test_loss': F.cross_entropy(y_hat, y)}
+        loss = self._run_step(batch, batch_idx)
+        tensorboard_logs = {'test_loss': loss}
+        return {'test_loss': loss, 'log': tensorboard_logs}
 
     def test_epoch_end(self, outputs):
         avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
@@ -96,30 +98,49 @@ class RoadMap(pl.LightningModule):
         return torch.optim.Adam(self.parameters(), lr=0.001)
 
     def prepare_data(self):
-        self.cifar_train = CIFAR10(os.getcwd(), train=True, download=True, transform=transforms.ToTensor())
-        self.cifar_test = CIFAR10(os.getcwd(), train=False, download=True, transform=transforms.ToTensor())
-
-    def train_dataloader(self):
         image_folder = 'data'
         annotation_csv = 'data/annotation.csv'
+
+        # split into train and validation
+        np.random.shuffle(labeled_scene_index)
+        training_set_index = labeled_scene_index[:24]
+        validation_set_index = labeled_scene_index[24:]
+
         transform = transforms.ToTensor()
-        labeled_trainset = LabeledDataset(image_folder=image_folder,
+
+        # training set
+        self.labeled_trainset = LabeledDataset(image_folder=image_folder,
                                           annotation_file=annotation_csv,
-                                          scene_index=labeled_scene_index,
+                                          scene_index=training_set_index,
                                           transform=transform,
                                           extra_info=False
                                           )
-        loader = DataLoader(labeled_trainset, batch_size=batch_size, shuffle=True, num_workers=2, collate_fn=collate_fn)
+        # validation set
+        self.labeled_validset = LabeledDataset(image_folder=image_folder,
+                                          annotation_file=annotation_csv,
+                                          scene_index=validation_set_index,
+                                          transform=transform,
+                                          extra_info=False
+                                          )
+        #self.cifar_train = CIFAR10(os.getcwd(), train=True, download=True, transform=transforms.ToTensor())
+        #self.cifar_test = CIFAR10(os.getcwd(), train=False, download=True, transform=transforms.ToTensor())
+
+    def train_dataloader(self):
+        loader = DataLoader(self.labeled_trainset, batch_size=batch_size, shuffle=True, num_workers=2,
+                            collate_fn=collate_fn)
         #loader = DataLoader(self.mnist_train, batch_size=32)
         return loader
 
     def val_dataloader(self):
-        loader = DataLoader(self.cifar_test, batch_size=batch_size)
+        loader = DataLoader(self.labeled_validset, batch_size=batch_size, shuffle=True, num_workers=2,
+                            collate_fn=collate_fn)
+        #loader = DataLoader(self.cifar_test, batch_size=batch_size)
         return loader
 
     def test_dataloader(self):
-        loader = DataLoader(self.cifar_test, batch_size=batch_size)
-        return loader
+        pass
+        #loader = DataLoader(self.cifar_test, batch_size=batch_size)
+        #return loader
 
 
 class Identity(nn.Module):
@@ -141,5 +162,5 @@ if __name__ == '__main__':
     batch_size = 2
 
     model = RoadMap()
-    trainer = pl.Trainer(num_sanity_val_steps=1)
+    trainer = pl.Trainer(fast_dev_run=True)
     trainer.fit(model)
