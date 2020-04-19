@@ -31,43 +31,52 @@ class RoadMap(pl.LightningModule):
         self.feature_extractor = models.resnet50(
                                     pretrained=True,
                                     num_classes=1000)
+        # remove last layer (FC) of resnet by making it the identity
         self.feature_extractor.fc = Identity()
+        # put the feature extractor into eval model so that the weights are frozen and dont train
         self.feature_extractor.eval()
 
-        # FC layer to predict
+        # FC layer to predict - this is the only layer I'm training atm
         self.linear_1 = nn.Linear(2048, output_dim)
 
     def forward(self, x):
         # called with self(x)
         representations = self.feature_extractor(x)
+
+        # apply a sigmoid activation to the linear layer
         outputs = F.sigmoid(self.linear_1(representations))
         return outputs
 
     def _run_step(self, batch, batch_idx):
+        # this function is going to be used for one step of the training/validation loops
+        # so basically for one batch in one epoch - we take in that batch, predict the outputs, calculate
+        # the loss from the predictions and return that loss
+        # pytorch lightning is automatically going to update the weights for us - no need to run explicitly
         sample, target, road_image = batch
 
-        # change samples from tuple with length batch size containing 6x3xHxW to batch_sizex6x3xHxW
+        # change dim from tuple with length(tuple) = batch_size containing tensors with size [6 x 3 x H x W]
+        # --> to tensor with size [batch_size x 6 x 3 x H x W]
         x = torch.stack(sample, dim=0)
 
-        # reorder 6 images for each sample
+        # reorder 6 images for each sample so they're sequential order for the wide view
         x = x[:, [0, 1, 2, 5, 4, 3]]
 
         # reshape to wide format - stitch 6 images side by side
         x = x.permute(0, 2, 1, 3, 4).reshape(batch_size, 3, 256, -1)
 
-        # get the road-image y with shape batch_sizex800x800
+        # get the road-image y with shape [batch_size x 800 x 800]
         y = torch.stack(road_image, dim=0)
 
         # forward pass to calculate outputs
         outputs = self(x)
 
-        # flatten y and outputs for binary cross entropy
+        # flatten y and outputs in order to run binary cross entropy fn --> shape [batch_size x 800*800]
+        # also convert true y from True/False to 1/0
         outputs = outputs.view(outputs.size(0), -1)
         y = y.view(y.size(0), -1).float()
 
         loss = F.binary_cross_entropy(outputs, y)
         return loss
-
 
     def training_step(self, batch, batch_idx):
         loss = self._run_step(batch, batch_idx)
@@ -98,10 +107,13 @@ class RoadMap(pl.LightningModule):
         return torch.optim.Adam(self.parameters(), lr=0.001)
 
     def prepare_data(self):
+        # here we download and transform the data but don't load them into dataloaders yet
+        # the dataloaders are run batch by batch where this is run fully and once before beginning training
         image_folder = 'data'
         annotation_csv = 'data/annotation.csv'
 
-        # split into train and validation
+        # split into train and validation - did this using scene indices but not sure if we want to split the
+        # datasets at the scene folder level or at the sample level - could try both
         np.random.shuffle(labeled_scene_index)
         training_set_index = labeled_scene_index[:24]
         validation_set_index = labeled_scene_index[24:]
@@ -162,5 +174,5 @@ if __name__ == '__main__':
     batch_size = 2
 
     model = RoadMap()
-    trainer = pl.Trainer(fast_dev_run=True)
+    trainer = pl.Trainer(fast_dev_run=True) #fast_dev_run is a helpful way to debug and quickly check that all part of the model are working
     trainer.fit(model)
