@@ -113,21 +113,21 @@ for epoch in range(epochs):
         x_pred , z = model(sample)
         loss = criterion(x_pred,sample)
 
- 		loss_train += loss.cpu().detach().numpy()
+         loss_train += loss.cpu().detach().numpy()
 
 
- 		# Backward Pass
- 		loss.backward()
- 		optimizer.step()   
- 		count += 1
- 	loss_train /= count
+        # Backward Pass
+        loss.backward()
+        optimizer.step()   
+        count += 1
+     loss_train /= count
 
- 	# VALID
- 	model.eval()
- 	count, loss_valid = 0,0.0
- 	with torch.no_grad():
- 		for sample in unlabeled_validloader:
- 		    #send objects to device
+    # VALID
+    model.eval()
+    count, loss_valid = 0,0.0
+    with torch.no_grad():
+        for sample in unlabeled_validloader:
+            #send objects to device
             sample = sample.to(device)
             #feed forward classifier,compute loss    
             x_pred, z = model(maps)
