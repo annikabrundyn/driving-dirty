@@ -140,19 +140,15 @@ class RoadMap(pl.LightningModule):
                                           transform=transform,
                                           extra_info=False
                                           )
-        #self.cifar_train = CIFAR10(os.getcwd(), train=True, download=True, transform=transforms.ToTensor())
-        #self.cifar_test = CIFAR10(os.getcwd(), train=False, download=True, transform=transforms.ToTensor())
 
     def train_dataloader(self):
         loader = DataLoader(self.labeled_trainset, batch_size=self.hparams.batch_size, shuffle=True, num_workers=4,
                             collate_fn=collate_fn)
-        #loader = DataLoader(self.mnist_train, batch_size=32)
         return loader
 
     def val_dataloader(self):
         loader = DataLoader(self.labeled_validset, batch_size=self.hparams.batch_size, shuffle=True, num_workers=4,
                             collate_fn=collate_fn)
-        #loader = DataLoader(self.cifar_test, batch_size=batch_size)
         return loader
 
     def test_dataloader(self):
@@ -173,7 +169,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     #parser = pl.Trainer.add_argparse_args(parser)
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--link', type=str)
+    parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
     #parser = VAE.add_model_specific_args(parser)
     args = parser.parse_args()
 
