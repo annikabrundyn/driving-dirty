@@ -1,6 +1,7 @@
 import os
 import random
 
+from argparse import ArgumentParser
 import numpy as np
 import pandas as pd
 import torch
@@ -22,10 +23,11 @@ torch.manual_seed(0)
 
 class RoadMap(pl.LightningModule):
 
-    def __init__(self):
+    def __init__(self, hparams):
         super().__init__()
 
         output_dim = 800*800
+        self.hparams = hparams
 
         # pretrained feature extractor
         self.feature_extractor = models.resnet50(
@@ -37,13 +39,16 @@ class RoadMap(pl.LightningModule):
         self.feature_extractor.eval()
 
         # FC layer to predict - this is the only layer I'm training atm
-        self.linear_1 = nn.Linear(2048, output_dim)
+        self.linear_1 = nn.Linear(512, output_dim)
 
     def forward(self, x):
         # called with self(x)
         representations = self.feature_extractor(x)
-
+        # import pdb; pdb.set_trace()
         # apply a sigmoid activation to the linear layer
+        #outputs = self.max_pool(representations)
+        representations = representations.view(self.hparams.batch_size, -1).unsqueeze(1)
+        representations = F.max_pool1d(representations, kernel_size=4)
         outputs = F.sigmoid(self.linear_1(representations))
         return outputs
 
@@ -62,7 +67,7 @@ class RoadMap(pl.LightningModule):
         x = x[:, [0, 1, 2, 5, 4, 3]]
 
         # reshape to wide format - stitch 6 images side by side
-        x = x.permute(0, 2, 1, 3, 4).reshape(batch_size, 3, 256, -1)
+        x = x.permute(0, 2, 1, 3, 4).reshape(self.hparams.batch_size, 3, 256, -1)
 
         # get the road-image y with shape [batch_size x 800 x 800]
         y = torch.stack(road_image, dim=0)
@@ -107,10 +112,11 @@ class RoadMap(pl.LightningModule):
         return torch.optim.Adam(self.parameters(), lr=0.001)
 
     def prepare_data(self):
-        # here we download and transform the data but don't load them into dataloaders yet
+
+	# here we download and transform the data but don't load them into dataloaders yet
         # the dataloaders are run batch by batch where this is run fully and once before beginning training
-        image_folder = '../dat/data' #i had to update
-        annotation_csv = '../dat/data/annotation.csv'
+        image_folder = self.hparams.link #'/scratch/ab8690/DLSP20Dataset/data' #i had to update
+        annotation_csv = self.hparams.link + '/annotation.csv' #'/scratch/ab8690/DLSP20Dataset/data/annotation.csv'
 
         # split into train and validation - did this using scene indices but not sure if we want to split the
         # datasets at the scene folder level or at the sample level - could try both
@@ -134,19 +140,15 @@ class RoadMap(pl.LightningModule):
                                           transform=transform,
                                           extra_info=False
                                           )
-        #self.cifar_train = CIFAR10(os.getcwd(), train=True, download=True, transform=transforms.ToTensor())
-        #self.cifar_test = CIFAR10(os.getcwd(), train=False, download=True, transform=transforms.ToTensor())
 
     def train_dataloader(self):
-        loader = DataLoader(self.labeled_trainset, batch_size=batch_size, shuffle=True, num_workers=2,
+        loader = DataLoader(self.labeled_trainset, batch_size=self.hparams.batch_size, shuffle=True, num_workers=4,
                             collate_fn=collate_fn)
-        #loader = DataLoader(self.mnist_train, batch_size=32)
         return loader
 
     def val_dataloader(self):
-        loader = DataLoader(self.labeled_validset, batch_size=batch_size, shuffle=True, num_workers=2,
+        loader = DataLoader(self.labeled_validset, batch_size=self.hparams.batch_size, shuffle=True, num_workers=4,
                             collate_fn=collate_fn)
-        #loader = DataLoader(self.cifar_test, batch_size=batch_size)
         return loader
 
     def test_dataloader(self):
@@ -164,15 +166,16 @@ class Identity(nn.Module):
 
 
 if __name__ == '__main__':
-    #parser = ArgumentParser()
+    parser = ArgumentParser()
     #parser = pl.Trainer.add_argparse_args(parser)
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
     #parser = VAE.add_model_specific_args(parser)
-    #args = parser.parse_args()
+    args = parser.parse_args()
 
     unlabeled_scene_index = np.arange(106)
     labeled_scene_index = np.arange(106, 134)
-    batch_size = 2
 
-    model = RoadMap()
-    trainer = pl.Trainer(fast_dev_run=True) #fast_dev_run is a helpful way to debug and quickly check that all part of the model are working
+    model = RoadMap(args)
+    trainer = pl.Trainer(gpus=1)
     trainer.fit(model)
