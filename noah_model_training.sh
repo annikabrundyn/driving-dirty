@@ -5,9 +5,9 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=30GB
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=Autoencoder
+#SBATCH --job-name=Lightning_Autoencoder
 #SBATCH --mail-type=END
 #SBATCH --output=slurm_%j.out
 
 
-python train_autoencoder.py
+python grease_lightning.py
