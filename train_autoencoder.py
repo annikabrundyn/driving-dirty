@@ -1,3 +1,4 @@
+import os 
 import torch
 import torch.nn as nn
 import numpy as np
@@ -18,7 +19,7 @@ learning_rate = 1e-3
 weight_decay  = 0
 
 
-model = Custom_Autoencoder_Full(BasicBlock,Custom_Autoencoder_Block,in_ch=3)
+model = Custom_Autoencoder_Full(BasicBlock,Custom_Autoencoder_Block,in_ch=3,ch=64,nblocks=2)
 
 f_out = 'autoencoder_results_%.1e_%.1e_%d_%s.txt'\
                %(learning_rate, weight_decay, batch_size,str(epochs))
@@ -46,14 +47,14 @@ image_folder = '../dat/data/'
 annotation_csv = image_folder + 'annotation.csv'
 
 unlabeled_scene_index_train = np.arange(80)
-unlabeled_scene_valid_index = np.arange(80,106)
+unlabeled_scene_index_valid = np.arange(80,106)
 
-unlabeled_trainset = UnlabeledDataset(image_folder=image_folder, scene_index=labeled_scene_train_index, 
+unlabeled_trainset = UnlabeledDataset(image_folder=image_folder, scene_index=unlabeled_scene_index_train, 
                                       first_dim='sample', transform=transform)
 unlabeled_trainloader = torch.utils.data.DataLoader(unlabeled_trainset, batch_size=batch_size, 
                                                     shuffle=True, num_workers=2)
 
-unlabeled_validset = UnlabeledDataset(image_folder=image_folder, scene_index=labeled_scene_valid_index, 
+unlabeled_validset = UnlabeledDataset(image_folder=image_folder, scene_index=unlabeled_scene_index_valid, 
                                       first_dim='sample', transform=transform)
 unlabeled_validloader = torch.utils.data.DataLoader(unlabeled_validset, batch_size=batch_size, 
                                                     shuffle=True, num_workers=2)
@@ -84,7 +85,7 @@ with torch.no_grad():
         #send objects to device
         sample = sample.to(device)
         #feed forward classifier,compute loss    
-        x_pred, z = model(maps)
+        x_pred, z = model(sample)
         error    = criterion(x_pred,sample)
         best_loss += error.cpu().numpy()
         
@@ -113,14 +114,14 @@ for epoch in range(epochs):
         x_pred , z = model(sample)
         loss = criterion(x_pred,sample)
 
-         loss_train += loss.cpu().detach().numpy()
+        loss_train += loss.cpu().detach().numpy()
 
 
         # Backward Pass
         loss.backward()
         optimizer.step()   
         count += 1
-     loss_train /= count
+    loss_train /= count
 
     # VALID
     model.eval()
@@ -130,7 +131,7 @@ for epoch in range(epochs):
             #send objects to device
             sample = sample.to(device)
             #feed forward classifier,compute loss    
-            x_pred, z = model(maps)
+            x_pred, z = model(sample)
             error    = criterion(x_pred,sample)
             loss_valid += error.cpu().numpy()
  

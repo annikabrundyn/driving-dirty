@@ -1,169 +1,0 @@
-Downloading: "https://download.pytorch.org/models/resnet50-19c8e357.pth" to /home/nsk367/.cache/torch/checkpoints/resnet50-19c8e357.pth
-  0%|          | 0.00/97.8M [00:00<?, ?B/s]  8%|▊         | 8.14M/97.8M [00:00<00:01, 85.3MB/s] 20%|█▉        | 19.2M/97.8M [00:00<00:00, 92.7MB/s] 31%|███       | 30.4M/97.8M [00:00<00:00, 98.8MB/s] 42%|████▏     | 40.9M/97.8M [00:00<00:00, 102MB/s]  50%|█████     | 48.9M/97.8M [00:00<00:00, 74.4MB/s] 57%|█████▋    | 55.8M/97.8M [00:00<00:00, 48.9MB/s] 63%|██████▎   | 61.4M/97.8M [00:01<00:00, 41.7MB/s] 68%|██████▊   | 66.2M/97.8M [00:01<00:00, 36.5MB/s] 72%|███████▏  | 70.4M/97.8M [00:01<00:00, 34.4MB/s] 76%|███████▌  | 74.1M/97.8M [00:01<00:00, 30.8MB/s] 79%|███████▉  | 77.5M/97.8M [00:01<00:00, 30.0MB/s] 85%|████████▍ | 82.8M/97.8M [00:01<00:00, 34.6MB/s] 89%|████████▊ | 86.6M/97.8M [00:01<00:00, 32.7MB/s] 92%|█████████▏| 90.1M/97.8M [00:02<00:00, 30.7MB/s] 99%|█████████▉| 97.1M/97.8M [00:02<00:00, 37.2MB/s]100%|██████████| 97.8M/97.8M [00:02<00:00, 48.2MB/s]
-INFO:lightning:Running in fast_dev_run mode: will run a full train, val and test loop using a single batch
-/scratch/nsk367/pytorch-use/py3.6.3/lib/python3.6/site-packages/pytorch_lightning/utilities/warnings.py:18: RuntimeWarning: You have defined a `val_dataloader()` and have defined a `validation_step()`, you may also want to define `validation_epoch_end()` for accumulating stats.
-  warnings.warn(*args, **kwargs)
-INFO:lightning:Set SLURM handle signals.
-INFO:lightning:
-    | Name                                    | Type              | Params
---------------------------------------------------------------------------
-0   | feature_extractor                       | ResNet            | 23 M  
-1   | feature_extractor.conv1                 | Conv2d            | 9 K   
-2   | feature_extractor.bn1                   | BatchNorm2d       | 128   
-3   | feature_extractor.relu                  | ReLU              | 0     
-4   | feature_extractor.maxpool               | MaxPool2d         | 0     
-5   | feature_extractor.layer1                | Sequential        | 215 K 
-6   | feature_extractor.layer1.0              | Bottleneck        | 75 K  
-7   | feature_extractor.layer1.0.conv1        | Conv2d            | 4 K   
-8   | feature_extractor.layer1.0.bn1          | BatchNorm2d       | 128   
-9   | feature_extractor.layer1.0.conv2        | Conv2d            | 36 K  
-10  | feature_extractor.layer1.0.bn2          | BatchNorm2d       | 128   
-11  | feature_extractor.layer1.0.conv3        | Conv2d            | 16 K  
-12  | feature_extractor.layer1.0.bn3          | BatchNorm2d       | 512   
-13  | feature_extractor.layer1.0.relu         | ReLU              | 0     
-14  | feature_extractor.layer1.0.downsample   | Sequential        | 16 K  
-15  | feature_extractor.layer1.0.downsample.0 | Conv2d            | 16 K  
-16  | feature_extractor.layer1.0.downsample.1 | BatchNorm2d       | 512   
-17  | feature_extractor.layer1.1              | Bottleneck        | 70 K  
-18  | feature_extractor.layer1.1.conv1        | Conv2d            | 16 K  
-19  | feature_extractor.layer1.1.bn1          | BatchNorm2d       | 128   
-20  | feature_extractor.layer1.1.conv2        | Conv2d            | 36 K  
-21  | feature_extractor.layer1.1.bn2          | BatchNorm2d       | 128   
-22  | feature_extractor.layer1.1.conv3        | Conv2d            | 16 K  
-23  | feature_extractor.layer1.1.bn3          | BatchNorm2d       | 512   
-24  | feature_extractor.layer1.1.relu         | ReLU              | 0     
-25  | feature_extractor.layer1.2              | Bottleneck        | 70 K  
-26  | feature_extractor.layer1.2.conv1        | Conv2d            | 16 K  
-27  | feature_extractor.layer1.2.bn1          | BatchNorm2d       | 128   
-28  | feature_extractor.layer1.2.conv2        | Conv2d            | 36 K  
-29  | feature_extractor.layer1.2.bn2          | BatchNorm2d       | 128   
-30  | feature_extractor.layer1.2.conv3        | Conv2d            | 16 K  
-31  | feature_extractor.layer1.2.bn3          | BatchNorm2d       | 512   
-32  | feature_extractor.layer1.2.relu         | ReLU              | 0     
-33  | feature_extractor.layer2                | Sequential        | 1 M   
-34  | feature_extractor.layer2.0              | Bottleneck        | 379 K 
-35  | feature_extractor.layer2.0.conv1        | Conv2d            | 32 K  
-36  | feature_extractor.layer2.0.bn1          | BatchNorm2d       | 256   
-37  | feature_extractor.layer2.0.conv2        | Conv2d            | 147 K 
-38  | feature_extractor.layer2.0.bn2          | BatchNorm2d       | 256   
-39  | feature_extractor.layer2.0.conv3        | Conv2d            | 65 K  
-40  | feature_extractor.layer2.0.bn3          | BatchNorm2d       | 1 K   
-41  | feature_extractor.layer2.0.relu         | ReLU              | 0     
-42  | feature_extractor.layer2.0.downsample   | Sequential        | 132 K 
-43  | feature_extractor.layer2.0.downsample.0 | Conv2d            | 131 K 
-44  | feature_extractor.layer2.0.downsample.1 | BatchNorm2d       | 1 K   
-45  | feature_extractor.layer2.1              | Bottleneck        | 280 K 
-46  | feature_extractor.layer2.1.conv1        | Conv2d            | 65 K  
-47  | feature_extractor.layer2.1.bn1          | BatchNorm2d       | 256   
-48  | feature_extractor.layer2.1.conv2        | Conv2d            | 147 K 
-49  | feature_extractor.layer2.1.bn2          | BatchNorm2d       | 256   
-50  | feature_extractor.layer2.1.conv3        | Conv2d            | 65 K  
-51  | feature_extractor.layer2.1.bn3          | BatchNorm2d       | 1 K   
-52  | feature_extractor.layer2.1.relu         | ReLU              | 0     
-53  | feature_extractor.layer2.2              | Bottleneck        | 280 K 
-54  | feature_extractor.layer2.2.conv1        | Conv2d            | 65 K  
-55  | feature_extractor.layer2.2.bn1          | BatchNorm2d       | 256   
-56  | feature_extractor.layer2.2.conv2        | Conv2d            | 147 K 
-57  | feature_extractor.layer2.2.bn2          | BatchNorm2d       | 256   
-58  | feature_extractor.layer2.2.conv3        | Conv2d            | 65 K  
-59  | feature_extractor.layer2.2.bn3          | BatchNorm2d       | 1 K   
-60  | feature_extractor.layer2.2.relu         | ReLU              | 0     
-61  | feature_extractor.layer2.3              | Bottleneck        | 280 K 
-62  | feature_extractor.layer2.3.conv1        | Conv2d            | 65 K  
-63  | feature_extractor.layer2.3.bn1          | BatchNorm2d       | 256   
-64  | feature_extractor.layer2.3.conv2        | Conv2d            | 147 K 
-65  | feature_extractor.layer2.3.bn2          | BatchNorm2d       | 256   
-66  | feature_extractor.layer2.3.conv3        | Conv2d            | 65 K  
-67  | feature_extractor.layer2.3.bn3          | BatchNorm2d       | 1 K   
-68  | feature_extractor.layer2.3.relu         | ReLU              | 0     
-69  | feature_extractor.layer3                | Sequential        | 7 M   
-70  | feature_extractor.layer3.0              | Bottleneck        | 1 M   
-71  | feature_extractor.layer3.0.conv1        | Conv2d            | 131 K 
-72  | feature_extractor.layer3.0.bn1          | BatchNorm2d       | 512   
-73  | feature_extractor.layer3.0.conv2        | Conv2d            | 589 K 
-74  | feature_extractor.layer3.0.bn2          | BatchNorm2d       | 512   
-75  | feature_extractor.layer3.0.conv3        | Conv2d            | 262 K 
-76  | feature_extractor.layer3.0.bn3          | BatchNorm2d       | 2 K   
-77  | feature_extractor.layer3.0.relu         | ReLU              | 0     
-78  | feature_extractor.layer3.0.downsample   | Sequential        | 526 K 
-79  | feature_extractor.layer3.0.downsample.0 | Conv2d            | 524 K 
-80  | feature_extractor.layer3.0.downsample.1 | BatchNorm2d       | 2 K   
-81  | feature_extractor.layer3.1              | Bottleneck        | 1 M   
-82  | feature_extractor.layer3.1.conv1        | Conv2d            | 262 K 
-83  | feature_extractor.layer3.1.bn1          | BatchNorm2d       | 512   
-84  | feature_extractor.layer3.1.conv2        | Conv2d            | 589 K 
-85  | feature_extractor.layer3.1.bn2          | BatchNorm2d       | 512   
-86  | feature_extractor.layer3.1.conv3        | Conv2d            | 262 K 
-87  | feature_extractor.layer3.1.bn3          | BatchNorm2d       | 2 K   
-88  | feature_extractor.layer3.1.relu         | ReLU              | 0     
-89  | feature_extractor.layer3.2              | Bottleneck        | 1 M   
-90  | feature_extractor.layer3.2.conv1        | Conv2d            | 262 K 
-91  | feature_extractor.layer3.2.bn1          | BatchNorm2d       | 512   
-92  | feature_extractor.layer3.2.conv2        | Conv2d            | 589 K 
-93  | feature_extractor.layer3.2.bn2          | BatchNorm2d       | 512   
-94  | feature_extractor.layer3.2.conv3        | Conv2d            | 262 K 
-95  | feature_extractor.layer3.2.bn3          | BatchNorm2d       | 2 K   
-96  | feature_extractor.layer3.2.relu         | ReLU              | 0     
-97  | feature_extractor.layer3.3              | Bottleneck        | 1 M   
-98  | feature_extractor.layer3.3.conv1        | Conv2d            | 262 K 
-99  | feature_extractor.layer3.3.bn1          | BatchNorm2d       | 512   
-100 | feature_extractor.layer3.3.conv2        | Conv2d            | 589 K 
-101 | feature_extractor.layer3.3.bn2          | BatchNorm2d       | 512   
-102 | feature_extractor.layer3.3.conv3        | Conv2d            | 262 K 
-103 | feature_extractor.layer3.3.bn3          | BatchNorm2d       | 2 K   
-104 | feature_extractor.layer3.3.relu         | ReLU              | 0     
-105 | feature_extractor.layer3.4              | Bottleneck        | 1 M   
-106 | feature_extractor.layer3.4.conv1        | Conv2d            | 262 K 
-107 | feature_extractor.layer3.4.bn1          | BatchNorm2d       | 512   
-108 | feature_extractor.layer3.4.conv2        | Conv2d            | 589 K 
-109 | feature_extractor.layer3.4.bn2          | BatchNorm2d       | 512   
-110 | feature_extractor.layer3.4.conv3        | Conv2d            | 262 K 
-111 | feature_extractor.layer3.4.bn3          | BatchNorm2d       | 2 K   
-112 | feature_extractor.layer3.4.relu         | ReLU              | 0     
-113 | feature_extractor.layer3.5              | Bottleneck        | 1 M   
-114 | feature_extractor.layer3.5.conv1        | Conv2d            | 262 K 
-115 | feature_extractor.layer3.5.bn1          | BatchNorm2d       | 512   
-116 | feature_extractor.layer3.5.conv2        | Conv2d            | 589 K 
-117 | feature_extractor.layer3.5.bn2          | BatchNorm2d       | 512   
-118 | feature_extractor.layer3.5.conv3        | Conv2d            | 262 K 
-119 | feature_extractor.layer3.5.bn3          | BatchNorm2d       | 2 K   
-120 | feature_extractor.layer3.5.relu         | ReLU              | 0     
-121 | feature_extractor.layer4                | Sequential        | 14 M  
-122 | feature_extractor.layer4.0              | Bottleneck        | 6 M   
-123 | feature_extractor.layer4.0.conv1        | Conv2d            | 524 K 
-124 | feature_extractor.layer4.0.bn1          | BatchNorm2d       | 1 K   
-125 | feature_extractor.layer4.0.conv2        | Conv2d            | 2 M   
-126 | feature_extractor.layer4.0.bn2          | BatchNorm2d       | 1 K   
-127 | feature_extractor.layer4.0.conv3        | Conv2d            | 1 M   
-128 | feature_extractor.layer4.0.bn3          | BatchNorm2d       | 4 K   
-129 | feature_extractor.layer4.0.relu         | ReLU              | 0     
-130 | feature_extractor.layer4.0.downsample   | Sequential        | 2 M   
-131 | feature_extractor.layer4.0.downsample.0 | Conv2d            | 2 M   
-132 | feature_extractor.layer4.0.downsample.1 | BatchNorm2d       | 4 K   
-133 | feature_extractor.layer4.1              | Bottleneck        | 4 M   
-134 | feature_extractor.layer4.1.conv1        | Conv2d            | 1 M   
-135 | feature_extractor.layer4.1.bn1          | BatchNorm2d       | 1 K   
-136 | feature_extractor.layer4.1.conv2        | Conv2d            | 2 M   
-137 | feature_extractor.layer4.1.bn2          | BatchNorm2d       | 1 K   
-138 | feature_extractor.layer4.1.conv3        | Conv2d            | 1 M   
-139 | feature_extractor.layer4.1.bn3          | BatchNorm2d       | 4 K   
-140 | feature_extractor.layer4.1.relu         | ReLU              | 0     
-141 | feature_extractor.layer4.2              | Bottleneck        | 4 M   
-142 | feature_extractor.layer4.2.conv1        | Conv2d            | 1 M   
-143 | feature_extractor.layer4.2.bn1          | BatchNorm2d       | 1 K   
-144 | feature_extractor.layer4.2.conv2        | Conv2d            | 2 M   
-145 | feature_extractor.layer4.2.bn2          | BatchNorm2d       | 1 K   
-146 | feature_extractor.layer4.2.conv3        | Conv2d            | 1 M   
-147 | feature_extractor.layer4.2.bn3          | BatchNorm2d       | 4 K   
-148 | feature_extractor.layer4.2.relu         | ReLU              | 0     
-149 | feature_extractor.avgpool               | AdaptiveAvgPool2d | 0     
-150 | feature_extractor.fc                    | Identity          | 0     
-151 | linear_1                                | Linear            | 1 B   
-0it [00:00, ?it/s]  0%|          | 0/2 [00:00<?, ?it/s]Epoch 1:   0%|          | 0/2 [00:00<?, ?it/s]/scratch/nsk367/pytorch-use/py3.6.3/lib/python3.6/site-packages/pytorch_lightning/utilities/warnings.py:18: RuntimeWarning: Displayed epoch numbers in the progress bar start from "1" until v0.6.x, but will start from "0" in v0.8.0.
-  warnings.warn(*args, **kwargs)
-/scratch/nsk367/pytorch-use/py3.6.3/lib/python3.6/site-packages/pytorch_lightning/utilities/warnings.py:18: UserWarning: The dataloader, train dataloader, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` in the `DataLoader` init to improve performance.
-  warnings.warn(*args, **kwargs)
-/scratch/nsk367/pytorch-use/py3.6.3/lib/python3.6/site-packages/pytorch_lightning/utilities/warnings.py:18: UserWarning: The dataloader, val dataloader 0, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` in the `DataLoader` init to improve performance.
-  warnings.warn(*args, **kwargs)
-/opt/slurm/data/slurmd/job9026219/slurm_script: line 14: 136549 Killed                  python roadmap_baseline.py
-slurmstepd: error: Detected 157 oom-kill event(s) in step 9026219.batch cgroup. Some of your processes may have been killed by the cgroup out-of-memory handler.
