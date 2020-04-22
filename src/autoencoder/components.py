@@ -82,7 +82,7 @@ class Decoder(torch.nn.Module):
         x = F.relu(self.dc1(x))
         x = F.relu(self.dc2(x))
         x = F.relu(self.dc3(x))
-        x = F.sigmoid(self.dc4(x))    #NTS: remove this sigmoid - make it something else
+        x = self.dc4(x)   ### NOTE: removed the F.sigmoid on this layer - colour images
         return x
 
 
