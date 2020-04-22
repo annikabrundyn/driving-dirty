@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-setup(name='driving-dirty',
+setup(name='src',
       version='0.0.1',
       description='DL 2020 Project',
       author='',
