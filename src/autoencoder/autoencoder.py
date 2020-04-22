@@ -13,11 +13,7 @@ from src.utils.data_helper import UnlabeledDataset
 
 
 class BasicAE(LightningModule):
-
-    def __init__(
-            self,
-            hparams=None,
-    ):
+    def __init__(self, hparams=None):
         super().__init__()
         # attach hparams to log hparams to the loggers (like tensorboard)
         self.__check_hparams(hparams)
@@ -160,7 +156,6 @@ class BasicAE(LightningModule):
                                              batch_size=self.batch_size,
                                              shuffle=True,
                                              num_workers=4)
-
         return loader
 
     def val_dataloader(self):
@@ -205,5 +200,5 @@ if __name__ == '__main__':
     unlabeled_scene_index = np.arange(106)
 
     ae = BasicAE(args)
-    trainer = Trainer(fast_dev_run=True)
+    trainer = Trainer()
     trainer.fit(ae)
