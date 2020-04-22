@@ -10,7 +10,7 @@ from torchvision import transforms
 import torchvision.models as models
 
 from src.utils.data_helper import LabeledDataset
-from utils.helper import collate_fn
+from src.utils.helper import collate_fn
 
 import pytorch_lightning as pl
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     #parser = pl.Trainer.add_argparse_args(parser)
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
+    parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
     #parser = VAE.add_model_specific_args(parser)
     args = parser.parse_args()
 
