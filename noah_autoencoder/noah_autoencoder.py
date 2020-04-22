@@ -130,9 +130,9 @@ class Car_Autoencoder(pl.LightningModule):
         except:
             x = sample #should already be stacked, if unlabeled dataset. 
 
-        outputs = self(x)
-
-        loss = F.smooth_l1_loss(outputs, x[:,3])
+        outputs, z = self(x)
+        target = F.pad(x[:,3],(-2,-1,-1,0))
+        loss = F.smooth_l1_loss(outputs, target)
         return loss
     
     def training_step(self, batch, batch_idx):
