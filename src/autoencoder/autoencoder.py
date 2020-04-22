@@ -113,23 +113,6 @@ class BasicAE(LightningModule):
             'log': tensorboard_logs
         }
 
-    # def test_step(self, batch, batch_idx):
-    #     loss = self._run_step(batch)
-    #
-    #     return {
-    #         'test_loss': loss,
-    #     }
-    #
-    # def test_epoch_end(self, outputs):
-    #     avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
-    #
-    #     tensorboard_logs = {'mse_loss': avg_loss}
-    #
-    #     return {
-    #         'avg_test_loss': avg_loss,
-    #         'log': tensorboard_logs
-    #     }
-
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.001)
 
@@ -164,10 +147,6 @@ class BasicAE(LightningModule):
                                              shuffle=True,
                                              num_workers=4)
         return loader
-
-    # def test_dataloader(self):
-    #     pass
-    #     #return self.dataloaders.test_dataloader(self.batch_size)
 
     @staticmethod
     def add_model_specific_args(parent_parser):
