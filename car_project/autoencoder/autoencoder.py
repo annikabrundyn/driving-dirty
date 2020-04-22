@@ -1,13 +1,15 @@
 import os
 from argparse import ArgumentParser
 
-import numpy as np
 import torch
-from pytorch_lightning import LightningModule, Trainer
+import torchvision
 from torch.nn import functional as F
-from autoencoder.components import Encoder, Decoder
-from utils.data_helper import UnlabeledDataset
-from utils.helper import collate_fn, draw_box
+from pytorch_lightning import LightningModule, Trainer
+
+import numpy as np
+
+from car_project.autoencoder.components import Encoder, Decoder
+from car_project.utils.data_helper import UnlabeledDataset
 from pl_bolts.datamodules import MNISTDataLoaders
 
 
@@ -139,10 +141,24 @@ class BasicAE(LightningModule):
         return torch.optim.Adam(self.parameters(), lr=0.001)
 
     def prepare_data(self):
-        self.dataloaders.prepare_data()
+        image_folder = self.hparams.link
+
+        transform = torchvision.transforms.ToTensor()
+
+        self.unlabeled_trainset = UnlabeledDataset(image_folder=image_folder,
+                                                   scene_index=unlabeled_scene_index,
+                                                   first_dim='sample',
+                                                   transform=transform)
+        #self.dataloaders.prepare_data()
 
     def train_dataloader(self):
-        return self.dataloaders.train_dataloader(self.batch_size)
+        loader = torch.utils.data.DataLoader(self.unlabeled_trainset,
+                                             batch_size=self.batch_size,
+                                             shuffle=True,
+                                             num_workers=2)
+
+        return loader
+        #return self.dataloaders.train_dataloader(self.batch_size)
 
     def val_dataloader(self):
         return self.dataloaders.val_dataloader(self.batch_size)
@@ -167,6 +183,8 @@ class BasicAE(LightningModule):
 
         parser.add_argument('--batch_size', type=int, default=2)
         parser.add_argument('--in_channels', type=int, default=3)
+
+        parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         return parser
 
 
@@ -175,6 +193,8 @@ if __name__ == '__main__':
     parser = Trainer.add_argparse_args(parser)
     parser = BasicAE.add_model_specific_args(parser)
     args = parser.parse_args()
+
+    unlabeled_scene_index = np.arange(106)
 
     ae = BasicAE(args)
     trainer = Trainer(fast_dev_run=True)
