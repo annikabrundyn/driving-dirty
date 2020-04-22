@@ -89,29 +89,20 @@ class BasicAE(LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = self._run_step(batch)
-
-        tensorboard_logs = {
-            'mse_loss': loss,
-        }
+        tensorboard_logs = {'mse_loss': loss}
 
         return {'loss': loss, 'log': tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
         loss = self._run_step(batch)
 
-        return {
-            'val_loss': loss,
-        }
+        return {'val_loss': loss}
 
     def validation_epoch_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-
         tensorboard_logs = {'mse_loss': avg_loss}
 
-        return {
-            'avg_val_loss': avg_loss,
-            'log': tensorboard_logs
-        }
+        return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.001)
@@ -131,8 +122,7 @@ class BasicAE(LightningModule):
 
         self.trainset, self.validset = torch.utils.data.random_split(unlabeled_dataset,
                                                                       lengths = [trainset_size,
-                                                                                 validset_size]
-                                                                     )
+                                                                                 validset_size])
 
     def train_dataloader(self):
         loader = torch.utils.data.DataLoader(self.trainset,
