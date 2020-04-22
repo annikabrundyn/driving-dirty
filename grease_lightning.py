@@ -43,7 +43,6 @@ class AutoBlock(nn.Module):
         self.bn6 = nn.BatchNorm2d(256)
         self.bottleneck = nn.Conv2d(256,256, kernel_size = 3, stride = 1, padding = 1)
         self.dropout = nn.Dropout2d(p=0.4)
-
         self.upsample1 = nn.ConvTranspose2d(256,128,kernel_size=5,stride=2,output_padding=1)
         self.bn7 = nn.BatchNorm2d(128)
         self.conv4 = nn.Conv2d(128,128,kernel_size = 5,stride = 1,padding = 2)  #samme as covn 3! Tie weights?
@@ -62,24 +61,24 @@ class AutoBlock(nn.Module):
         
         
     def forward(self,x):
-        #x = self.relu1(self.conv1(x))
-        x = F.relu(self.bn2(self.downsample1(F.relu(self.bn1(self.conv1(x))))))
+        x = F.relu(self.bn2(self.downsample1(F.relu(self.bn1(self.conv1(x)))))) #modular
         x = F.relu(self.bn4(self.downsample2(F.relu(self.bn3(self.conv2(x))))))
         x = F.relu(self.bn6(self.downsample3(F.relu(self.bn5(self.conv3(x))))))
         z = self.dropout(F.relu(self.bottleneck(x)))
         x = F.relu(self.bn8(self.conv4(F.relu(self.bn7(self.upsample1(z))))))
         x = F.relu(self.bn10(self.conv5(F.relu(self.bn9(self.upsample2(x))))))
         x = F.relu(self.bn12(self.conv6(F.relu(self.bn11(self.upsample3(x))))))
-        x = self.output_layer(x)
+        x = self.output_layer(x) 
         
         return F.pad(x,(-1,-1,-2,-2)), z
         
         
-        
+
+
 class Self_Driving_Autoencoder(pl.LightningModule):
     
     def __init__(self,block,in_ch):
-        super(Self_Driving_Autoencoder,self).__init__()
+        super(block,self).__init__()
         
         self.AE1 = block(in_ch)
         self.AE2 = block(in_ch)
@@ -98,7 +97,7 @@ class Self_Driving_Autoencoder(pl.LightningModule):
         xf, zf = self.AE6(x[:,5])
 
         return torch.stack([xa,xb,xc,xd,xe,xf],dim=1), torch.stack([za,zb,zc,zd,ze,zf],dim=1)
-    
+            #immediately gives the same shape as the sample from train loader. 
     
     def _run_step(self, batch, batch_idx):
         # this function is going to be used for one step of the training/validation loops
@@ -116,8 +115,10 @@ class Self_Driving_Autoencoder(pl.LightningModule):
 
         outputs = self(x)
 
+#        x.shape == (3,28,28)       #xs is a tuple of (x,x)
+# xs.stack(dim=0) =(2,3,28x28) xs.stack(dim=1) => (3,2,28,28) 
 
-        loss = F.mse_loss(outputs, x)
+        loss = F.mse_loss(outputs, x) #smooth_l1loss #better for cv,, blurry average of a set of 
         return loss
     
     def training_step(self, batch, batch_idx):
