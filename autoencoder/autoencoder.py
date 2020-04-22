@@ -30,12 +30,15 @@ class BasicAE(LightningModule):
     def __check_hparams(self, hparams):
         self.hidden_dim = hparams.hidden_dim if hasattr(hparams, 'hidden_dim') else 128
         self.latent_dim = hparams.latent_dim if hasattr(hparams, 'latent_dim') else 32
+
         self.input_width = hparams.input_width if hasattr(hparams, 'input_width') else 306*6
         self.input_height = hparams.input_height if hasattr(hparams, 'input_height') else 256
-        self.output_width = hparams.input_width if hasattr(hparams, 'output_width') else 306
-        self.output_height = hparams.input_height if hasattr(hparams, 'output_height') else 256
-        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 32
-        self.in_channels = hparams.batch_size if hasattr(hparams, 'in_channels') else 3
+
+        self.output_width = hparams.output_width if hasattr(hparams, 'output_width') else 306
+        self.output_height = hparams.output_height if hasattr(hparams, 'output_height') else 256
+
+        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 2
+        self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
 
     def init_encoder(self, hidden_dim, latent_dim, in_channels, input_height, input_width):
         encoder = Encoder(hidden_dim, latent_dim, in_channels, input_height, input_width)
@@ -46,11 +49,11 @@ class BasicAE(LightningModule):
         return decoder
 
     def six_to_one_task(self, x):
-        # stitch images together
+        # reorder and stitch images together in wide format
         x = x[:, [0, 1, 2, 5, 4, 3]]
-        x = x.permute(0, 2, 1, 3, 4).reshape(32, 3, 256, -1)
+        x = x.permute(0, 2, 1, 3, 4).reshape(self.batch_size, self.in_channels, self.input_height, -1)
 
-        # randomly choose one picture to be blacked out - find index wrt wide image
+        # randomly choose one picture to be blacked out
         target_img_index = np.random.randint(0,5)
         start_i = target_img_index * 306
         end_i = start_i + 306
@@ -58,6 +61,7 @@ class BasicAE(LightningModule):
         y = x[:, :, :, start_i: end_i]
         x[:, :, :, start_i: end_i] = 0.0
 
+        # check that the dimensions are correct
         assert x.size(-1) == 6 * 306
         assert y.size(-1) == 306
 
@@ -70,14 +74,20 @@ class BasicAE(LightningModule):
         input, _ = batch
 
         # (batch, imgs, c, h=256, w=306)
-        input = torch.randn(32, 6, 3, 256, 306)
+        input = torch.randn(self.batch_size, 6, self.in_channels, 256, 306)
 
         x, y = self.six_to_one_task(input)
 
+        # Encode - z has dim batch_size x latent_dim
         z = self.encoder(x)
-        x_hat = self(z)
 
-        loss = F.mse_loss(x.view(x.size(0), -1), x_hat)
+        # Decode - y_hat has same dim as true y
+        y_hat = self(z)
+
+        # consider replacing this reconstruction loss with something else
+        # note - flatten both the true and the predicted to calculated mse loss
+        loss = F.mse_loss(y, y_hat)
+
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -145,6 +155,7 @@ class BasicAE(LightningModule):
                             help='itermediate layers dimension before embedding for default encoder/decoder')
         parser.add_argument('--latent_dim', type=int, default=32,
                             help='dimension of latent variables z')
+
         parser.add_argument('--input_width', type=int, default=306*6,
                             help='input image width - 28 for MNIST (must be even)')
         parser.add_argument('--input_height', type=int, default=256,
@@ -152,7 +163,7 @@ class BasicAE(LightningModule):
         parser.add_argument('--output_width', type=int, default=306)
         parser.add_argument('--output_height', type=int, default=256)
 
-        parser.add_argument('--batch_size', type=int, default=32)
+        parser.add_argument('--batch_size', type=int, default=2)
         parser.add_argument('--in_channels', type=int, default=3)
         return parser
 
@@ -164,5 +175,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ae = BasicAE(args)
-    trainer = Trainer()
+    trainer = Trainer(fast_dev_run=True)
     trainer.fit(ae)
