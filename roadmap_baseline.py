@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import torchvision.models as models
 
-from car_project.utils.data_helper import LabeledDataset
+from src.utils.data_helper import LabeledDataset
 from utils.helper import collate_fn
 
 import pytorch_lightning as pl
