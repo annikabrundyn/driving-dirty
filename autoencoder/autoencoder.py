@@ -5,7 +5,9 @@ import numpy as np
 import torch
 from pytorch_lightning import LightningModule, Trainer
 from torch.nn import functional as F
-from components import Encoder, Decoder
+from autoencoder.components import Encoder, Decoder
+from utils.data_helper import UnlabeledDataset
+from utils.helper import collate_fn, draw_box
 from pl_bolts.datamodules import MNISTDataLoaders
 
 
