@@ -10,7 +10,6 @@ import numpy as np
 
 from src.autoencoder.components import Encoder, Decoder
 from src.utils.data_helper import UnlabeledDataset
-from pl_bolts.datamodules import MNISTDataLoaders
 
 
 class BasicAE(LightningModule):
@@ -23,8 +22,6 @@ class BasicAE(LightningModule):
         # attach hparams to log hparams to the loggers (like tensorboard)
         self.__check_hparams(hparams)
         self.hparams = hparams
-
-        self.dataloaders = MNISTDataLoaders(save_path=os.getcwd())
 
         self.encoder = self.init_encoder(self.hidden_dim, self.latent_dim,
                                          self.in_channels, self.input_height, self.input_width)
@@ -57,7 +54,7 @@ class BasicAE(LightningModule):
         x = x[:, [0, 1, 2, 5, 4, 3]]
         x = x.permute(0, 2, 1, 3, 4).reshape(self.batch_size, self.in_channels, self.input_height, -1)
 
-        # randomly choose one picture to be blacked out
+        # randomly choose one of the 6 pictures to be blacked out
         target_img_index = np.random.randint(0,5)
         start_i = target_img_index * 306
         end_i = start_i + 306
@@ -120,22 +117,22 @@ class BasicAE(LightningModule):
             'log': tensorboard_logs
         }
 
-    def test_step(self, batch, batch_idx):
-        loss = self._run_step(batch)
-
-        return {
-            'test_loss': loss,
-        }
-
-    def test_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
-
-        tensorboard_logs = {'mse_loss': avg_loss}
-
-        return {
-            'avg_test_loss': avg_loss,
-            'log': tensorboard_logs
-        }
+    # def test_step(self, batch, batch_idx):
+    #     loss = self._run_step(batch)
+    #
+    #     return {
+    #         'test_loss': loss,
+    #     }
+    #
+    # def test_epoch_end(self, outputs):
+    #     avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
+    #
+    #     tensorboard_logs = {'mse_loss': avg_loss}
+    #
+    #     return {
+    #         'avg_test_loss': avg_loss,
+    #         'log': tensorboard_logs
+    #     }
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.001)
@@ -145,26 +142,37 @@ class BasicAE(LightningModule):
 
         transform = torchvision.transforms.ToTensor()
 
-        self.unlabeled_trainset = UnlabeledDataset(image_folder=image_folder,
-                                                   scene_index=unlabeled_scene_index,
-                                                   first_dim='sample',
-                                                   transform=transform)
-        #self.dataloaders.prepare_data()
+        unlabeled_dataset = UnlabeledDataset(image_folder=image_folder,
+                                             scene_index=unlabeled_scene_index,
+                                             first_dim='sample',
+                                             transform=transform)
+
+        trainset_size = round(0.8 * len(unlabeled_dataset))
+        validset_size = round(0.2 * len(unlabeled_dataset))
+
+        self.trainset, self.validset = torch.utils.data.random_split(unlabeled_dataset,
+                                                                      lengths = [trainset_size,
+                                                                                 validset_size]
+                                                                     )
 
     def train_dataloader(self):
-        loader = torch.utils.data.DataLoader(self.unlabeled_trainset,
+        loader = torch.utils.data.DataLoader(self.trainset,
                                              batch_size=self.batch_size,
                                              shuffle=True,
-                                             num_workers=2)
+                                             num_workers=4)
 
         return loader
-        #return self.dataloaders.train_dataloader(self.batch_size)
 
     def val_dataloader(self):
-        return self.dataloaders.val_dataloader(self.batch_size)
+        loader = torch.utils.data.DataLoader(self.trainset,
+                                             batch_size=self.batch_size,
+                                             shuffle=True,
+                                             num_workers=4)
+        return loader
 
-    def test_dataloader(self):
-        return self.dataloaders.test_dataloader(self.batch_size)
+    # def test_dataloader(self):
+    #     pass
+    #     #return self.dataloaders.test_dataloader(self.batch_size)
 
     @staticmethod
     def add_model_specific_args(parent_parser):
