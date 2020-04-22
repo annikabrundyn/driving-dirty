@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 
-from helper import convert_map_to_lane_map, convert_map_to_road_map
+from utils.helper import convert_map_to_lane_map, convert_map_to_road_map
 
 NUM_SAMPLE_PER_SCENE = 126
 NUM_IMAGE_PER_SAMPLE = 6
