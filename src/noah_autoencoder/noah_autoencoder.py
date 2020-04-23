@@ -16,7 +16,7 @@ from torchvision import transforms
 
 from src.utils.data_helper import UnlabeledDataset
 
-#from helper import collate_fn, draw_box
+from src.utils.helper import collate_fn, draw_box
 
 
 random.seed(0)
