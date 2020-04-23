@@ -7,7 +7,6 @@ import pytorch_lightning as pl
 import os
 import random
 import sys
-sys.path.append('../')
 import numpy as np
 import pandas as pd
 
@@ -15,8 +14,9 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from data_helper import UnlabeledDataset, LabeledDataset
-from helper import collate_fn, draw_box
+from src.utils.data_helper import UnlabeledDataset
+
+#from helper import collate_fn, draw_box
 
 
 random.seed(0)
