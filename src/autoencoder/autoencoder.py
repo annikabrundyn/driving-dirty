@@ -169,5 +169,5 @@ if __name__ == '__main__':
     unlabeled_scene_index = np.arange(106)
 
     ae = BasicAE(args)
-    trainer = Trainer.from_argparse_args(parser)
+    trainer = Trainer.from_argparse_args(args)
     trainer.fit(ae)
