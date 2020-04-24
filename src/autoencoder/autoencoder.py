@@ -135,7 +135,7 @@ class BasicAE(LightningModule):
     def val_dataloader(self):
         loader = torch.utils.data.DataLoader(self.trainset,
                                              batch_size=self.batch_size,
-                                             shuffle=True,
+                                             shuffle=False,
                                              num_workers=4)
         return loader
 
