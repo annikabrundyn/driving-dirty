@@ -1,3 +1,7 @@
+"""
+Dimensionality issues. Grr
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,7 +24,6 @@ from src.utils.helper import collate_fn, draw_box
 
 
 random.seed(0)
-unlabeled_scene_index = np.arange(100)
 
 
 class InceptionE(nn.Module):  # inception module
@@ -125,16 +128,14 @@ class Car_Autoencoder(pl.LightningModule):
             sample, target, road_image = batch
         except:
             sample  = batch
-        print(np.shape(sample)
-        sys.exit()
         # change dim from tuple with length(tuple) = batch_size containing tensors with size [6 x 3 x H x W]
         # --> to tensor with size [batch_size x 6 x 3 x H x W]
         try:
-            x = torch.stack(sample, dim=0)
+            x = torch.stack(sample[0], dim=0)
         except:
             x = sample #should already be stacked, if unlabeled dataset. 
-        
-        outputs, z = self(x)
+        print(x.shape)
+        outputs, z = self(x)  
         target = F.pad(x[:,3],(-2,-1,-1,0))
         loss = F.smooth_l1_loss(outputs, target)
         return loss
@@ -170,7 +171,8 @@ class Car_Autoencoder(pl.LightningModule):
     def prepare_data(self):
         
         # the dataloaders are run batch by batch where this is run fully and once before beginning training
-        image_folder = '/scratch/nsk367/pytorch-use/DLSP20/dat/data' 
+        #image_folder = '/scratch/nsk367/pytorch-use/DLSP20/dat/data' 
+        image_folder = '/Users/noahkasmanoff/Desktop/Deep_Learning/car/dat/data'
         annotation_csv = image_folder + '/annotation.csv' #'/scratch/ab8690/DLSP20Dataset/data/annotation.csv'
 
         # split into train and validation - did this using scene indices but not sure if we want to split the
@@ -209,6 +211,6 @@ if __name__ == '__main__':
     labeled_scene_index = np.arange(106, 134)
     
     model = Car_Autoencoder(Inception_Autoencoder,Encoder,Decoder,InceptionE,BasicConv2d,in_ch=3,base_ch=16)
-    trainer = pl.Trainer(gpus=1)
+    trainer = pl.Trainer(gpus=0)
     trainer.fit(model)
 
