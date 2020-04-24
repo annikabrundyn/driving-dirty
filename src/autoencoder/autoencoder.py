@@ -73,7 +73,6 @@ class BasicAE(LightningModule):
         # (batch, imgs, c, h=256, w=306)
         #input = torch.randn(self.batch_size, 6, self.in_channels, 256, 306)
 
-        import pdb; pdb.set_trace()
 
         x, y = self.six_to_one_task(batch)
 
@@ -90,6 +89,7 @@ class BasicAE(LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx):
+        import pdb; pdb.set_trace()
         loss = self._run_step(batch)
         tensorboard_logs = {'mse_loss': loss}
 
