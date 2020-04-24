@@ -18,7 +18,7 @@ class Encoder(torch.nn.Module):
 
         self.c1 = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
         self.c2 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
-        self.c3 = nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1)
+        self.c3 = nn.Conv2d(32, 16, kernel_size=3, stride=2, padding=1)
 
         conv_out_dim = self._calculate_output_dim(in_channels, input_height, input_width)
 

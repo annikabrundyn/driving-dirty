@@ -89,7 +89,6 @@ class BasicAE(LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx):
-        import pdb; pdb.set_trace()
         loss = self._run_step(batch)
         tensorboard_logs = {'mse_loss': loss}
 
