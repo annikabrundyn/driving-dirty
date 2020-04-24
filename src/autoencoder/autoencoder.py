@@ -105,7 +105,7 @@ class BasicAE(LightningModule):
         return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.001)
+        return torch.optim.SGD(self.parameters(), lr=0.001)
 
     def prepare_data(self):
         image_folder = self.hparams.link
