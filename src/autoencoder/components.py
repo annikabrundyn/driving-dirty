@@ -38,8 +38,11 @@ class Encoder(torch.nn.Module):
         x = F.relu(self.c2(x))
         x = F.relu(self.c3(x))
         x = x.view(x.size(0), -1)
+        import pdb; pdb.set_trace()
+        x = F.max_pool1d(x, kernel_size=4, stride=2)
         x = self.fc1(x)
         x = self.fc2(x)
+
 
         z = self.fc_z_out(x)
         return z
