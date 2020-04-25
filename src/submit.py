@@ -67,7 +67,6 @@ if __name__ == '__main__':
     # give the module a chance to add own params
     # good practice to define LightningModule specific params in the module
     parser = MODEL_CLASS.add_model_specific_args(parser)
-    parser.add_argument('--gpus', type=int, default=1)
     parser.add_argument('--nodes', type=int, default=1)
     parser.add_argument('--conda_env', type=str, default='driving-dirty')
     parser.add_argument('--on_cluster', default=False, action='store_true')
