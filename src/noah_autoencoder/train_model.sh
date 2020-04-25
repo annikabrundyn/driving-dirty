@@ -10,4 +10,4 @@
 #SBATCH --output=slurm_%j.out
 
 
-python noah_autoencoder.py
+python other_training.py
