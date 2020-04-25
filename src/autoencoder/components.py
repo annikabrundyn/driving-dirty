@@ -16,9 +16,9 @@ class Encoder(torch.nn.Module):
         self.input_width = input_width
         self.in_channels = in_channels
 
-        self.c1 = nn.Conv2d(in_channels, 16, kernel_size=3, padding=1)
-        self.c2 = nn.Conv2d(16, 16, kernel_size=3, padding=1)
-        self.c3 = nn.Conv2d(16, 16, kernel_size=3, stride=2, padding=1)
+        self.c1 = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
+        self.c2 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
+        self.c3 = nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1)
 
         conv_out_dim = self._calculate_output_dim(in_channels, input_height, input_width)
 
@@ -61,15 +61,15 @@ class Decoder(torch.nn.Module):
         self.fc1 = DenseBlock(latent_dim, hidden_dim)
         self.fc2 = DenseBlock(hidden_dim, self.deconv_dim_h * self.deconv_dim_w * 64)
         self.dc1 = nn.ConvTranspose2d(64, 32, kernel_size=3, padding=1)
-        self.dc2 = nn.ConvTranspose2d(32, 16, kernel_size=3, padding=1)
-        self.dc3 = nn.ConvTranspose2d(16, 16, kernel_size=2, stride=2)
+        self.dc2 = nn.ConvTranspose2d(32, 32, kernel_size=3, padding=1)
+        self.dc3 = nn.ConvTranspose2d(32, 16, kernel_size=2, stride=2)
         self.dc4 = nn.ConvTranspose2d(16, in_channels, kernel_size=1, stride=1)
 
     def _calculate_output_size(self, in_channels, output_height, output_width):
         x = torch.rand(1, in_channels, output_height, output_width)
         dc1 = nn.Conv2d(in_channels, 16, kernel_size=1, stride=1)
-        dc2 = nn.Conv2d(16, 16, kernel_size=2, stride=2)
-        dc3 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
+        dc2 = nn.Conv2d(16, 32, kernel_size=2, stride=2)
+        dc3 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
         dc4 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
 
         x = dc4(dc3(dc2(dc1(x))))
