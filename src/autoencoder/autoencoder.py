@@ -98,8 +98,6 @@ class BasicAE(LightningModule):
         pred_images = torchvision.utils.make_grid(y_hat)
         target_images = torchvision.utils.make_grid(y)
 
-        import pdb; pdb.set_trace()
-
         self.logger.experiment.add_image(f'{step_name}_predicted_images', pred_images, self.trainer.global_step)
         self.logger.experiment.add_image(f'{step_name}_target_images', target_images, self.trainer.global_step)
 
