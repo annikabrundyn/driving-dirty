@@ -57,6 +57,8 @@ class BasicAE(LightningModule):
         end_i = start_i + 306
 
         y = x[:, :, :, start_i: end_i]
+        y = y.clone()
+
         x[:, :, :, start_i: end_i] = 0.0
 
         # check that the dimensions are correct
