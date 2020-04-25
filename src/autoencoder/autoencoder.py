@@ -49,8 +49,8 @@ class BasicAE(LightningModule):
     def six_to_one_task(self, x):
         # reorder and stitch images together in wide format
         x = x[:, [0, 1, 2, 5, 4, 3]]
-        import pdb; pdb.set_trace()
-        # x = x.permute(0, 2, 1, 3, 4).reshape(self.batch_size, self.in_channels, self.input_height, -1)
+        b, num_imgs, c, h, w = x.size()
+        x = x.permute(0, 2, 3, 1, 4).reshape(b, c, h, -1)
 
         # randomly choose one of the 6 pictures to be blacked out
         target_img_index = np.random.randint(0,5)
