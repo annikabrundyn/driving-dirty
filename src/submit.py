@@ -24,11 +24,12 @@ def main(hparams, cluster):
     hparams.default_root_dir = path
 
     # most basic trainer, uses good defaults
-    trainer = Trainer(
-        default_root_dir=hparams.default_root_dir,
-        gpus=hparams.gpus,
-        precision=hparams.precision
-    )
+    trainer = Trainer.from_argparse_args(hparams)
+    # trainer = Trainer(
+    #     default_root_dir=hparams.default_root_dir,
+    #     gpus=hparams.gpus,
+    #     precision=hparams.precision
+    # )
     trainer.fit(model)
 
 
