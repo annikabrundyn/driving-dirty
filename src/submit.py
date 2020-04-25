@@ -58,11 +58,11 @@ def run_on_cluster(hyperparams):
     cluster.optimize_parallel_cluster_gpu(main,
                                           nb_trials=hyperparams.nb_hopt_trials,
                                           job_name=job_display_name)
+
 if __name__ == '__main__':
     root_dir = os.path.split(os.path.dirname(sys.modules['__main__'].__file__))[0]
 
     parser = HyperOptArgumentParser(add_help=False, strategy='grid_search')
-    parser = Trainer.add_argparse_args(parser)
     parser.add_argument('--model', type=str, default='basic_ae')
 
     (temp_args, arr) = parser.parse_known_args()
