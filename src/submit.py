@@ -44,7 +44,7 @@ def run_on_cluster(hyperparams):
     # cluster.job_time = '20:00:00'
     cluster.job_time = '2:00:00'
     cluster.minutes_to_checkpoint_before_walltime = 5
-    cluster.memory_mb_per_node = 0
+    cluster.memory_mb_per_node = 30000
     # come up with a short exp name
     job_display_name = hyperparams.tt_name.split('_')[0]
     job_display_name = job_display_name[0:4]
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('--on_cluster', default=False, action='store_true')
     parser.add_argument('-n', '--tt_name', default='dd_basi_ae')
     parser.add_argument('-d', '--tt_description', default='pretrained ae for feature extraction')
-    parser.add_argument('--logs_save_path')
+    parser.add_argument('--logs_save_path', default='/scratch/ab8690/logs')
     parser.add_argument('--single_run', dest='single_run', action='store_true')
     parser.add_argument('--nb_hopt_trials', default=1, type=int)
 
