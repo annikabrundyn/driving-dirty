@@ -124,17 +124,13 @@ class Car_Autoencoder(pl.LightningModule):
         # so basically for one batch in one epoch - we take in that batch, predict the outputs, calculate
         # the loss from the predictions and return that loss
         # pytorch lightning is automatically going to update the weights for us - no need to run explicitly
-        try:
-            sample, target, road_image = batch
-        except:
-            sample  = batch
-        # change dim from tuple with length(tuple) = batch_size containing tensors with size [6 x 3 x H x W]
-        # --> to tensor with size [batch_size x 6 x 3 x H x W]
-        try:
-            x = torch.stack(sample[0], dim=0)
-        except:
-            x = sample #should already be stacked, if unlabeled dataset. 
-        print(x.shape)
+        
+        sample   = batch #should be for unlabeled
+        x = sample #torch.stack(sample, dim=0)
+        
+        #  BATCH SIZE, 6, 3, 256, 306
+        #print("X = ", x)
+        #print(x.shape) 
         outputs, z = self(x)  
         target = F.pad(x[:,3],(-2,-1,-1,0))
         loss = F.smooth_l1_loss(outputs, target)
@@ -155,15 +151,6 @@ class Car_Autoencoder(pl.LightningModule):
         tensorboard_logs = {'val_loss': avg_loss}
         return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
 
-    def test_step(self, batch, batch_idx):
-        loss = self._run_step(batch, batch_idx)
-        tensorboard_logs = {'test_loss': loss}
-        return {'test_loss': loss, 'log': tensorboard_logs}
-
-    def test_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'test_loss': avg_loss}
-        return {'avg_test_loss': avg_loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.001)
@@ -178,8 +165,8 @@ class Car_Autoencoder(pl.LightningModule):
         # split into train and validation - did this using scene indices but not sure if we want to split the
         # datasets at the scene folder level or at the sample level - could try both
         np.random.shuffle(unlabeled_scene_index)
-        training_set_index = unlabeled_scene_index[:89]
-        validation_set_index = unlabeled_scene_index[89:]
+        training_set_index = unlabeled_scene_index[:4]
+        validation_set_index = unlabeled_scene_index[4:5]
 
         transform = transforms.ToTensor()
 
@@ -189,17 +176,15 @@ class Car_Autoencoder(pl.LightningModule):
         self.unlabeled_validset = UnlabeledDataset(image_folder=image_folder, scene_index=validation_set_index, first_dim='sample', transform=transform)
         
     def train_dataloader(self):
-        loader = DataLoader(self.unlabeled_trainset, batch_size=4, shuffle=True, num_workers=4,
-                            collate_fn=collate_fn)
+        loader = DataLoader(self.unlabeled_trainset, batch_size=4, shuffle=True, num_workers=4)
         return loader
  
     def val_dataloader(self):
-        loader = DataLoader(self.unlabeled_validset, batch_size=4, shuffle=True, num_workers=4,
-                            collate_fn=collate_fn)
+        loader = DataLoader(self.unlabeled_validset, batch_size=4, shuffle=True, num_workers=4)
         return loader
 
-    def test_dataloader(self):
-        pass
+    #def test_dataloader(self):
+        #pass
         #loader = DataLoader(self.cifar_test, batch_size=batch_size)
         #return loader
         
@@ -208,7 +193,6 @@ if __name__ == '__main__':
 
 
     unlabeled_scene_index = np.arange(106)
-    labeled_scene_index = np.arange(106, 134)
     
     model = Car_Autoencoder(Inception_Autoencoder,Encoder,Decoder,InceptionE,BasicConv2d,in_ch=3,base_ch=16)
     trainer = pl.Trainer(gpus=0)
