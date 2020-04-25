@@ -91,7 +91,10 @@ class BasicAE(LightningModule):
 
         return loss
 
-    def _log_images(self, y, y_hat, step_name):
+    def _log_images(self, y, y_hat, step_name, limit=2):
+        y = y[:limit]
+        y_hat = y_hat[:limit]
+
         pred_images = torchvision.utils.make_grid(y_hat)
         target_images = torchvision.utils.make_grid(y)
 
