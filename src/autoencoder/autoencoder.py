@@ -68,12 +68,11 @@ class BasicAE(LightningModule):
     def forward(self, z):
         return self.decoder(z)
 
-    def _run_step(self, batch):
+    def _run_step(self, batch, batch_idx, step_name):
         #input, _ = batch
 
         # (batch, imgs, c, h=256, w=306)
         #input = torch.randn(self.batch_size, 6, self.in_channels, 256, 306)
-
 
         x, y = self.six_to_one_task(batch)
 
@@ -83,20 +82,30 @@ class BasicAE(LightningModule):
         # Decode - y_hat has same dim as true y
         y_hat = self(z)
 
+        if batch_idx % 2 == 0:
+            self._log_images(y, y_hat, step_name)
+
         # consider replacing this reconstruction loss with something else
         # note - flatten both the true and the predicted to calculated mse loss
         loss = F.mse_loss(y, y_hat)
 
         return loss
 
+    def _log_images(self, y, y_hat, step_name):
+        pred_images = torchvision.utils.make_grid(y_hat)
+        target_images = torchvision.utils.make_grid(y)
+
+        self.logger.experiment.add_image(f'{step_name}_predicted_images', pred_images, self.trainer.global_step)
+        self.logger.experiment.add_image(f'{step_name}_target_images', target_images, self.trainer.global_step)
+
     def training_step(self, batch, batch_idx):
-        loss = self._run_step(batch)
+        loss = self._run_step(batch, batch_idx, step_name='train')
         tensorboard_logs = {'mse_loss': loss}
 
         return {'loss': loss, 'log': tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        loss = self._run_step(batch)
+        loss = self._run_step(batch, batch_idx, step_name='valid')
 
         return {'val_loss': loss}
 
