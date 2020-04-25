@@ -5,6 +5,7 @@ import torch
 import torchvision
 from torch.nn import functional as F
 from pytorch_lightning import LightningModule, Trainer
+from test_tube import HyperOptArgumentParser
 
 import numpy as np
 
@@ -114,7 +115,7 @@ class BasicAE(LightningModule):
         transform = torchvision.transforms.ToTensor()
 
         unlabeled_dataset = UnlabeledDataset(image_folder=image_folder,
-                                             scene_index=unlabeled_scene_index,
+                                             scene_index=np.arange(106),
                                              first_dim='sample',
                                              transform=transform)
 
@@ -141,7 +142,7 @@ class BasicAE(LightningModule):
 
     @staticmethod
     def add_model_specific_args(parent_parser):
-        parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--hidden_dim', type=int, default=128,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
         parser.add_argument('--latent_dim', type=int, default=32,
@@ -166,8 +167,6 @@ if __name__ == '__main__':
     parser = Trainer.add_argparse_args(parser)
     parser = BasicAE.add_model_specific_args(parser)
     args = parser.parse_args()
-
-    unlabeled_scene_index = np.arange(106)
 
     ae = BasicAE(args)
     trainer = Trainer.from_argparse_args(args)
