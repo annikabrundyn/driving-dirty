@@ -85,7 +85,7 @@ class BasicAE(LightningModule):
         y_hat = self(z)
 
         if batch_idx % 2 == 0:
-            self._log_images(y, y_hat, step_name)
+            self._log_images(x, y, step_name)
 
         # consider replacing this reconstruction loss with something else
         # note - flatten both the true and the predicted to calculated mse loss
