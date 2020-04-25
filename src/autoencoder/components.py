@@ -41,6 +41,7 @@ class Encoder(torch.nn.Module):
         x = F.relu(self.c3(x))
         x = x.view(x.size(0), -1).unsqueeze(1)
         x = F.max_pool1d(x, kernel_size=self.pooling_size)
+        import pdb; pdb.set_trace()
         x = self.fc1(x)
         x = self.fc2(x)
 
