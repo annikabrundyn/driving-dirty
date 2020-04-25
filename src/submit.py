@@ -83,20 +83,3 @@ if __name__ == '__main__':
         run_on_cluster(hparams)
     else:
         main_local(hparams)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Message william falcon
-
