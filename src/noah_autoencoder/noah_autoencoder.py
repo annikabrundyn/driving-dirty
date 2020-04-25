@@ -106,11 +106,11 @@ class Inception_Autoencoder(nn.Module):
         return x,z
     
 
-class Car_Autoencoder(pl.LightningModule):
+class Car_Autoencoder(nn.Module):
     
     def __init__(self,AutoEncoder,Encoder,Decoder,InceptionBlock,BasicBlock,in_ch,base_ch):
         super(Car_Autoencoder,self).__init__()
-        self.prepare_data()
+        #self.prepare_data()
         self.AE = AutoEncoder(Encoder,Decoder,InceptionE,BasicConv2d,in_ch,base_ch)
         
     def forward(self,x):
@@ -118,7 +118,7 @@ class Car_Autoencoder(pl.LightningModule):
         x,z = self.AE(x[:,3])
         
         return x,z
-   
+"""  
     def _run_step(self, batch, batch_idx):
         # this function is going to be used for one step of the training/validation loops
         # so basically for one batch in one epoch - we take in that batch, predict the outputs, calculate
@@ -197,4 +197,4 @@ if __name__ == '__main__':
     model = Car_Autoencoder(Inception_Autoencoder,Encoder,Decoder,InceptionE,BasicConv2d,in_ch=3,base_ch=16)
     trainer = pl.Trainer(gpus=0)
     trainer.fit(model)
-
+"""
