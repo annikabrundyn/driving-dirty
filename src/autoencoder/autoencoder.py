@@ -84,7 +84,6 @@ class BasicAE(LightningModule):
         # Decode - y_hat has same dim as true y
         y_hat = self(z)
 
-        import pdb; pdb.set_trace()
         if batch_idx % 2 == 0:
             self._log_images(y, y_hat, step_name)
 
@@ -94,7 +93,7 @@ class BasicAE(LightningModule):
 
         return loss
 
-    def _log_images(self, y, y_hat, step_name, limit=2):
+    def _log_images(self, y, y_hat, step_name, limit=1):
         y = y[:limit]
         y_hat = y_hat[:limit]
 
