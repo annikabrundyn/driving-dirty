@@ -31,7 +31,7 @@ class Encoder(torch.nn.Module):
     def _calculate_output_dim(self, in_channels, input_height, input_width, pooling_size):
         x = torch.rand(1, in_channels, input_height, input_width)
         x = self.c3(self.c2(self.c1(x)))
-        x = x.view(-1)
+        x = x.view(-1).unsqueeze(1)
         x = F.max_pool1d(x, kernel_size=4)
         return x.size(0)
 
