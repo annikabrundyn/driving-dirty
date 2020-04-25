@@ -24,8 +24,13 @@ def main(hparams, cluster):
     hparams.default_root_dir = path
 
     # most basic trainer, uses good defaults
-    trainer = Trainer.from_argparse_args(hparams)
+    trainer = Trainer(
+        default_root_dir=hparams.default_root_dir,
+        gpus=hparams.gpus,
+        precision=hparams.precision
+    )
     trainer.fit(model)
+
 
 def run_on_cluster(hyperparams):
     # enable cluster training
@@ -75,6 +80,8 @@ if __name__ == '__main__':
     parser.add_argument('--logs_save_path', default='/scratch/ab8690/logs')
     parser.add_argument('--single_run', dest='single_run', action='store_true')
     parser.add_argument('--nb_hopt_trials', default=1, type=int)
+    parser.add_argument('--gpus', default=1, type=int)
+    parser.add_argument('--precision', default=16, type=int)
 
     # parse params
     hparams = parser.parse_args()
