@@ -20,26 +20,27 @@ class Encoder(torch.nn.Module):
         self.c2 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
         self.c3 = nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1)
 
-        conv_out_dim = self._calculate_output_dim(in_channels, input_height, input_width)
+        self.pooling_size = 4
+        conv_out_dim = self._calculate_output_dim(in_channels, input_height, input_width, self.pooling_size)
 
         self.fc1 = DenseBlock(conv_out_dim, hidden_dim)
         self.fc2 = DenseBlock(hidden_dim, hidden_dim)
 
         self.fc_z_out = nn.Linear(hidden_dim, latent_dim)
 
-    def _calculate_output_dim(self, in_channels, input_height, input_width):
+    def _calculate_output_dim(self, in_channels, input_height, input_width, pooling_size):
         x = torch.rand(1, in_channels, input_height, input_width)
         x = self.c3(self.c2(self.c1(x)))
         x = x.view(-1)
+        x = F.max_pool1d(x, kernel_size=4)
         return x.size(0)
 
     def forward(self, x):
         x = F.relu(self.c1(x))
         x = F.relu(self.c2(x))
         x = F.relu(self.c3(x))
-        x = x.view(x.size(0), -1)
-        import pdb; pdb.set_trace()
-        x = F.max_pool1d(x, kernel_size=4, stride=2)
+        x = x.view(x.size(0), -1).unsqueeze(1)
+        x = F.max_pool1d(x, kernel_size=self.pooling_size)
         x = self.fc1(x)
         x = self.fc2(x)
 
