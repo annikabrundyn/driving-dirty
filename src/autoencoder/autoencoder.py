@@ -160,7 +160,7 @@ class BasicAE(LightningModule):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--hidden_dim', type=int, default=128,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
-        parser.add_argument('--latent_dim', type=int, default=32,
+        parser.add_argument('--latent_dim', type=int, default=64,
                             help='dimension of latent variables z')
 
         parser.add_argument('--input_width', type=int, default=306*6,
