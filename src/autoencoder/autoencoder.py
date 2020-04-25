@@ -143,7 +143,7 @@ class BasicAE(LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
-        parser.add_argument('--hidden_dim', type=int, default=128,
+        parser.add_argument('--hidden_dim', type=int, default=64,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
         parser.add_argument('--latent_dim', type=int, default=32,
                             help='dimension of latent variables z')
