@@ -155,7 +155,7 @@ class BasicAE(LightningModule):
         parser.add_argument('--output_width', type=int, default=306)
         parser.add_argument('--output_height', type=int, default=256)
 
-        parser.add_argument('--batch_size', type=int, default=2)
+        parser.add_argument('--batch_size', type=int, default=24)
         parser.add_argument('--in_channels', type=int, default=3)
 
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
