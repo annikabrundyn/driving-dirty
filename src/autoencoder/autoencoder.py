@@ -122,7 +122,7 @@ class BasicAE(LightningModule):
         return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.001)
+        return torch.optim.Adam(self.parameters(), lr=0.0005)
 
     def prepare_data(self):
         image_folder = self.hparams.link
@@ -160,7 +160,7 @@ class BasicAE(LightningModule):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--hidden_dim', type=int, default=128,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
-        parser.add_argument('--latent_dim', type=int, default=64,
+        parser.add_argument('--latent_dim', type=int, default=128,
                             help='dimension of latent variables z')
 
         parser.add_argument('--input_width', type=int, default=306*6,
