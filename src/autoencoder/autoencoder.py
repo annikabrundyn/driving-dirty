@@ -85,7 +85,7 @@ class BasicAE(LightningModule):
         # Decode - y_hat has same dim as true y
         y_hat = self(z)
 
-        if batch_idx % 2 == 0:
+        if batch_idx % 10 == 0:
             self._log_images(y, y_hat, step_name)
 
         # consider replacing this reconstruction loss with something else
