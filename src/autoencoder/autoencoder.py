@@ -72,11 +72,6 @@ class BasicAE(LightningModule):
         return self.decoder(z)
 
     def _run_step(self, batch, batch_idx, step_name):
-        #input, _ = batch
-
-        # (batch, imgs, c, h=256, w=306)
-        #input = torch.randn(self.batch_size, 6, self.in_channels, 256, 306)
-
         x, y = self.six_to_one_task(batch)
 
         # Encode - z has dim batch_size x latent_dim
@@ -107,19 +102,16 @@ class BasicAE(LightningModule):
     def training_step(self, batch, batch_idx):
         loss = self._run_step(batch, batch_idx, step_name='train')
         tensorboard_logs = {'mse_loss': loss}
-
         return {'loss': loss, 'log': tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
         loss = self._run_step(batch, batch_idx, step_name='valid')
-
         return {'val_loss': loss}
 
     def validation_epoch_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {'mse_loss': avg_loss}
-
-        return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
+        return {'val_loss': avg_loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.0005)
