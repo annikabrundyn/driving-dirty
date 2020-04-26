@@ -48,7 +48,7 @@ def run_on_cluster(hyperparams):
     cluster.per_experiment_nb_nodes = 1
     cluster.gpu_type = 'k80'
     # cluster.job_time = '20:00:00'
-    cluster.job_time = '2:00:00'
+    cluster.job_time = '24:00:00'
     cluster.minutes_to_checkpoint_before_walltime = 5
     cluster.memory_mb_per_node = 30000
     # come up with a short exp name
