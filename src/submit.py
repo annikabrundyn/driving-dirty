@@ -81,7 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--tt_description', default='pretrained ae for feature extraction')
     parser.add_argument('--logs_save_path', default='/scratch/ab8690/logs')
     parser.add_argument('--single_run', dest='single_run', action='store_true')
-    parser.add_argument('--nb_hopt_trials', default=1, type=int)
+    parser.add_argument('--nb_hopt_trials', default=120, type=int)
     # parser.add_argument('--gpus', default=1, type=int)
     # parser.add_argument('--precision', default=16, type=int)
 
