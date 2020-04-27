@@ -5,11 +5,13 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from argparse import ArgumentParser
 from src.autoencoder.autoencoder import BasicAE
+from src.roadmap_model.roadmap_pretrain_ae import  RoadMap
 from test_tube import HyperOptArgumentParser, SlurmCluster
 import os, sys
 
 MODEL_NAMES = {
     'basic_ae': BasicAE,
+    'roadmap': RoadMap
 }
 
 def main_local(hparams):
@@ -65,7 +67,7 @@ if __name__ == '__main__':
 
     parser = HyperOptArgumentParser(add_help=False, strategy='grid_search')
     parser = Trainer.add_argparse_args(parser)
-    parser.add_argument('--model', type=str, default='basic_ae')
+    parser.add_argument('--model', type=str, default='roadmap')
 
     (temp_args, arr) = parser.parse_known_args()
     model_name = temp_args.model
