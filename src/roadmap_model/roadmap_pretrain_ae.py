@@ -66,8 +66,8 @@ class RoadMap(LightningModule):
         representations = self.ae.encoder(x)
 
         # now run through MLP
-        y = F.relu(self.fc1(representations))
-        y = F.sigmoid(self.fc2(y))
+        y = F.sigmoid(self.fc1(representations))
+        #y = F.sigmoid(self.fc2(y))
 
         return y
 
@@ -112,19 +112,18 @@ class RoadMap(LightningModule):
         self.logger.experiment.add_image(f'{step_name}_pred_roadmaps', pred_roadmaps, self.trainer.global_step)
 
     def training_step(self, batch, batch_idx):
-        loss = self._run_step(batch, batch_idx, step_name='train')
-        tensorboard_logs = {'train_loss': loss}
-        return {'loss': loss, 'log': tensorboard_logs}
+        train_loss = self._run_step(batch, batch_idx, step_name='train')
+        train_tensorboard_logs = {'train_loss': train_loss}
+        return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        loss = self._run_step(batch, batch_idx, step_name='valid')
-        tensorboard_logs = {'val_loss': loss}
-        return {'val_loss': loss, 'log': tensorboard_logs}
+        val_loss = self._run_step(batch, batch_idx, step_name='valid')
+        return {'val_loss': val_loss}
 
-    def validation_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'val_loss': avg_loss}
-        return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
+    def validation_epoch_end(self, outputs):
+        avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        val_tensorboard_logs = {'avg_val_loss': avg_val_loss}
+        return {'avg_val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.0005)
