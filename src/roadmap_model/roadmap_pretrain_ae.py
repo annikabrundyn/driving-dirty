@@ -87,10 +87,11 @@ class RoadMap(LightningModule):
         if batch_idx % 10 == 0:
             self._log_rm_images(x, target_rm, pred_rm, step_name)
 
+        import pdb;pdb.set_trace()
         # flatten roadmap tensors, convert target rm from True/False to 1/0
         target_rm = target_rm.view(target_rm.size(0), -1).float()
         pred_rm = pred_rm.view(pred_rm.size(0), -1)
-        import pdb; pdb.set_trace()
+
         # calculate binary cross entropy loss
         loss = nn.BCELoss(target_rm, pred_rm)
 
