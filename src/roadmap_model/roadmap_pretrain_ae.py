@@ -69,6 +69,9 @@ class RoadMap(LightningModule):
         y = torch.sigmoid(self.fc1(representations))
         #y = F.sigmoid(self.fc2(y))
 
+        # reshape prediction to be tensor with b x 800 x 800
+        y = y.reshape(y.size(0), 800, 800)
+
         return y
 
     def _run_step(self, batch, batch_idx, step_name):
