@@ -158,7 +158,7 @@ class RoadMap(LightningModule):
 
     def val_dataloader(self):
         # don't shuffle validation batches
-        loader = DataLoader(self.labeled_validset,
+        loader = DataLoader(self.validset,
                             batch_size=self.batch_size,
                             shuffle=False,
                             num_workers=4,
