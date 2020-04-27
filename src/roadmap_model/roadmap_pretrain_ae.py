@@ -92,7 +92,7 @@ class RoadMap(LightningModule):
         pred_rm = pred_rm.view(pred_rm.size(0), -1)
 
         # calculate binary cross entropy loss
-        loss = F.binary_cross_entropy(target_rm, pred_rm)
+        loss = nn.BCELoss(target_rm, pred_rm)
 
         return loss
 
