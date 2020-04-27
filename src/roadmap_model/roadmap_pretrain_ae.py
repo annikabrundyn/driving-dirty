@@ -18,6 +18,8 @@ from src.utils.helper import collate_fn
 
 from src.autoencoder.autoencoder import BasicAE
 
+from src.utils.helper import compute_ts_road_map
+
 random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
@@ -84,7 +86,7 @@ class RoadMap(LightningModule):
         x = self.wide_stitch_six_images(sample)
 
         # change target roadmap from tuple len([800 x 800]) = b --> tensor [b x 800 x 800]
-        target_rm = torch.stack(road_image, dim=0)
+        target_rm = torch.stack(road_image, dim=0).float()
 
         # forward pass to find predicted roadmap
         pred_rm = self(x)
@@ -94,13 +96,16 @@ class RoadMap(LightningModule):
             self._log_rm_images(x, target_rm, pred_rm, step_name)
 
         # flatten roadmap tensors, convert target rm from True/False to 1/0
-        target_rm = target_rm.view(target_rm.size(0), -1).float()
-        pred_rm = pred_rm.view(pred_rm.size(0), -1)
+        #target_rm = target_rm.view(target_rm.size(0), -1)
+        #pred_rm = pred_rm.view(pred_rm.size(0), -1)
 
         # calculate mse loss between pixels
         loss = F.mse_loss(target_rm, pred_rm)
 
-        return loss
+        # compute threat score
+        threat_score = compute_ts_road_map(target_rm, pred_rm)
+
+        return loss, threat_score
 
     def _log_rm_images(self, x, target_rm, pred_rm, step_name, limit=1):
         # log 6 images stitched wide, target/true roadmap and predicted roadmap
@@ -118,17 +123,19 @@ class RoadMap(LightningModule):
         self.logger.experiment.add_image(f'{step_name}_pred_roadmaps', pred_roadmaps, self.trainer.global_step)
 
     def training_step(self, batch, batch_idx):
-        train_loss = self._run_step(batch, batch_idx, step_name='train')
+        train_loss, train_ts = self._run_step(batch, batch_idx, step_name='train')
         train_tensorboard_logs = {'train_loss': train_loss}
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        val_loss = self._run_step(batch, batch_idx, step_name='valid')
+        val_loss, val_ts = self._run_step(batch, batch_idx, step_name='valid')
         return {'val_loss': val_loss}
 
     def validation_epoch_end(self, outputs):
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        val_tensorboard_logs = {'avg_val_loss': avg_val_loss}
+        avg_val_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+        val_tensorboard_logs = {'avg_val_loss': avg_val_loss,
+                                'avg_val_ts': avg_val_ts}
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
