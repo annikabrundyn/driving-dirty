@@ -123,7 +123,7 @@ class RoadMap(LightningModule):
 
         # calculate threat score
         val_ts = compute_ts_road_map(target_rm, pred_rm)
-        val_ts = torch.tensor(val_ts).type_as(val_loss)
+        #val_ts = torch.tensor(val_ts).type_as(val_loss)
 
         return {'val_loss': val_loss, 'val_ts': val_ts}
 

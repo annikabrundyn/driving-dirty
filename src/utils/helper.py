@@ -75,9 +75,9 @@ def compute_ats_bounding_boxes(boxes1, boxes2):
     return average_threat_score
 
 def compute_ts_road_map(road_map1, road_map2):
-    tp = (road_map1 * road_map2).sum().item()    #added .item() from piazza advice
+    tp = (road_map1 * road_map2).sum()
 
-    return tp * 1.0 / (road_map1.sum().item() + road_map2.sum().item() - tp)
+    return tp * 1.0 / (road_map1.sum() + road_map2.sum() - tp)
 
 def compute_iou(box1, box2):
     a = Polygon(torch.t(box1)).convex_hull
