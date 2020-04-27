@@ -129,7 +129,7 @@ class RoadMap(LightningModule):
 
     def validation_step(self, batch, batch_idx):
         val_loss, val_ts = self._run_step(batch, batch_idx, step_name='valid')
-        return {'val_loss': val_loss}
+        return {'val_loss': val_loss, 'val_ts':val_ts}
 
     def validation_epoch_end(self, outputs):
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
