@@ -102,11 +102,7 @@ class RoadMap(LightningModule):
         # calculate mse loss between pixels
         loss = F.mse_loss(target_rm, pred_rm)
 
-        import pdb; pdb.set_trace()
-        # compute threat score
-        threat_score = compute_ts_road_map(target_rm, pred_rm)
-
-        return loss, threat_score
+        return loss, target_rm, pred_rm
 
     def _log_rm_images(self, x, target_rm, pred_rm, step_name, limit=1):
         # log 6 images stitched wide, target/true roadmap and predicted roadmap
@@ -124,13 +120,18 @@ class RoadMap(LightningModule):
         self.logger.experiment.add_image(f'{step_name}_pred_roadmaps', pred_roadmaps, self.trainer.global_step)
 
     def training_step(self, batch, batch_idx):
-        train_loss, train_ts = self._run_step(batch, batch_idx, step_name='train')
+        train_loss, _, _ = self._run_step(batch, batch_idx, step_name='train')
         train_tensorboard_logs = {'train_loss': train_loss}
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        val_loss, val_ts = self._run_step(batch, batch_idx, step_name='valid')
-        return {'val_loss': val_loss, 'val_ts':val_ts}
+        val_loss, target_rm, pred_rm = self._run_step(batch, batch_idx, step_name='valid')
+
+        # calculate threat score
+        val_ts = compute_ts_road_map(target_rm, pred_rm)
+        val_ts = torch.tensor(val_ts).type_as(val_loss)
+
+        return {'val_loss': val_loss, 'val_ts': val_ts}
 
     def validation_epoch_end(self, outputs):
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
