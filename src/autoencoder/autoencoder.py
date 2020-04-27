@@ -80,7 +80,7 @@ class BasicAE(LightningModule):
         # Decode - y_hat has same dim as true y
         y_hat = self(z)
 
-        if batch_idx % 10 == 0:
+        if batch_idx % 1000 == 0:
             self._log_images(y, y_hat, step_name)
 
         # consider replacing this reconstruction loss with something else
@@ -100,18 +100,18 @@ class BasicAE(LightningModule):
         self.logger.experiment.add_image(f'{step_name}_target_images', target_images, self.trainer.global_step)
 
     def training_step(self, batch, batch_idx):
-        loss = self._run_step(batch, batch_idx, step_name='train')
-        tensorboard_logs = {'mse_loss': loss}
-        return {'loss': loss, 'log': tensorboard_logs}
+        train_loss = self._run_step(batch, batch_idx, step_name='train')
+        train_tensorboard_logs = {'train_loss': train_loss}
+        return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        loss = self._run_step(batch, batch_idx, step_name='valid')
-        return {'val_loss': loss}
+        val_loss = self._run_step(batch, batch_idx, step_name='valid')
+        return {'val_loss': val_loss}
 
     def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'mse_loss': avg_loss}
-        return {'val_loss': avg_loss, 'log': tensorboard_logs}
+        avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        val_tensorboard_logs = {'avg_val_loss': avg_val_loss}
+        return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.0005)
