@@ -10,6 +10,7 @@ import torchvision
 
 # import your model class
 # import ...
+from src.roadmap_model.roadmap_pretrain_ae import RoadMap
 
 # Put your transform function here, we will use it for our dataloader
 def get_transform(): 
@@ -28,7 +29,8 @@ class ModelLoader():
         #       2. load your state_dict
         #       3. call cuda()
         # self.model = ...
-        # 
+        self.roadmap_model =
+
         pass
 
     def get_bounding_boxes(self, samples):

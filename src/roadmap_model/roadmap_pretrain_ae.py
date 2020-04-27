@@ -103,7 +103,7 @@ class RoadMap(LightningModule):
         # take first image in the batch
         x = x[:limit]
         target_rm = target_rm[:limit]
-        pred_rm = pred_rm[:limit]
+        pred_rm = pred_rm[:limit].round()
 
         input_images = torchvision.utils.make_grid(x)
         target_roadmaps = torchvision.utils.make_grid(target_rm)
