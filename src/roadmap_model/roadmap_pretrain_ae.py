@@ -29,11 +29,9 @@ class RoadMap(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
-#        self.__check_hparams(hparams)
         self.hparams = hparams
         self.output_dim = 800 * 800
         #self.kernel_size = 4
-        #patched_ckpt_name = self.patch_checkpoint(self.hparams.checkpoint_path)
 
         # pretrained feature extractor - using our own trained Encoder
         self.ae = BasicAE.load_from_checkpoint(self.hparams.checkpoint_path)
@@ -43,10 +41,6 @@ class RoadMap(LightningModule):
         # MLP layers: feature embedding --> predict binary roadmap
         self.fc1 = nn.Linear(self.ae.latent_dim, self.output_dim)
         #self.fc2 = nn.Linear(200000, self.output_dim)
-
- #   def __check_hparams(self, hparams):
- #       self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 16
- #       self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
 
     def wide_stitch_six_images(self, sample):
         # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
@@ -191,20 +185,6 @@ class RoadMap(LightningModule):
         parser.add_argument('--checkpoint_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=100)
         return parser
-
-    # def patch_checkpoint(self, name):
-    #     from pytorch_lightning.core.saving import ModelIO, load_hparams_from_tags_csv
-    #     import re
-    #     from argparse import Namespace
-    #
-    #     d = torch.load(name, map_location=torch.device('cpu'))
-    #     csv_path = name.split('checkpoints')[0]
-    #     hparams = load_hparams_from_tags_csv(f'{csv_path}/meta_tags.csv')
-    #     d['hparams'] = hparams.__dict__
-    #     name = re.sub('epoch=', 'fix_epoch=', name)
-    #
-    #     torch.save(d, name)
-    #     return name
 
 
 if __name__ == '__main__':
