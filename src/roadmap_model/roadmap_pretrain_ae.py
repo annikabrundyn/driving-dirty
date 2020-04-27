@@ -66,7 +66,7 @@ class RoadMap(LightningModule):
         representations = self.ae.encoder(x)
 
         # now run through MLP
-        y = F.sigmoid(self.fc1(representations))
+        y = torch.sigmoid(self.fc1(representations))
         #y = F.sigmoid(self.fc2(y))
 
         return y
@@ -90,7 +90,7 @@ class RoadMap(LightningModule):
         # flatten roadmap tensors, convert target rm from True/False to 1/0
         target_rm = target_rm.view(target_rm.size(0), -1).float()
         pred_rm = pred_rm.view(pred_rm.size(0), -1)
-
+        import pdb; pdb.set_trace()
         # calculate binary cross entropy loss
         loss = nn.BCELoss(target_rm, pred_rm)
 
