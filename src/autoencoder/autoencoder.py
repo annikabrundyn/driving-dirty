@@ -27,7 +27,7 @@ class BasicAE(LightningModule):
 
     def __check_hparams(self, hparams):
         self.hidden_dim = hparams.hidden_dim if hasattr(hparams, 'hidden_dim') else 128
-        self.latent_dim = hparams.latent_dim if hasattr(hparams, 'latent_dim') else 32
+        self.latent_dim = hparams.latent_dim if hasattr(hparams, 'latent_dim') else 128
 
         self.input_width = hparams.input_width if hasattr(hparams, 'input_width') else 306*6
         self.input_height = hparams.input_height if hasattr(hparams, 'input_height') else 256
@@ -35,7 +35,7 @@ class BasicAE(LightningModule):
         self.output_width = hparams.output_width if hasattr(hparams, 'output_width') else 306
         self.output_height = hparams.output_height if hasattr(hparams, 'output_height') else 256
 
-        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 2
+        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 24
         self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
 
     def init_encoder(self, hidden_dim, latent_dim, in_channels, input_height, input_width):

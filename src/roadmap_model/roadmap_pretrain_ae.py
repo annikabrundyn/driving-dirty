@@ -22,6 +22,7 @@ random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
 
+
 class RoadMap(LightningModule):
 
     def __init__(self, hparams):
@@ -30,9 +31,11 @@ class RoadMap(LightningModule):
         self.hparams = hparams
         self.output_dim = 800 * 800
         #self.kernel_size = 4
+        path_checkpoint ='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt'
+        patched_ckpt_name = self.patch_checkpoint(path_checkpoint)
 
         # pretrained feature extractor - using our own trained Encoder
-        self.ae = BasicAE.load_from_checkpoint(self.hparams.checkpoint)
+        self.ae = BasicAE.load_from_checkpoint(patched_ckpt_name)
         self.ae.freeze()
         self.ae.decoder = None
 
@@ -61,7 +64,7 @@ class RoadMap(LightningModule):
     def forward(self, x):
         # note: can call forward(x) with self(x)
         # first find representations using the pretrained encoder
-        representations = self.ae(x)
+        representations = self.ae.encoder(x)
 
         # now run through MLP
         y = F.relu(self.fc1(representations))
@@ -168,13 +171,27 @@ class RoadMap(LightningModule):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
 
         # want to optimize this parameter
-        parser.opt_list('--batch_size', type=int, default=24, options=[64, 32, 24, 16, 10, 8], tunable=True)
-
+        #parser.opt_list('--batch_size', type=int, default=24, options=[32, 24, 16, 10, 8], tunable=True)
+        parser.add_argument('--batch_size', type=int, default=2)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
-        parser.add_argument('--checkpoint', type=str, default='')
-
+        parser.add_argument('--checkpoint', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
         return parser
+
+    def patch_checkpoint(self, name):
+        from pytorch_lightning.core.saving import ModelIO, load_hparams_from_tags_csv
+        import re
+        from argparse import Namespace
+
+        d = torch.load(name, map_location=torch.device('cpu'))
+        csv_path = name.split('checkpoints')[0]
+        hparams = load_hparams_from_tags_csv(f'{csv_path}/meta_tags.csv')
+        d['hparams'] = hparams.__dict__
+        name = re.sub('epoch=', 'fix_epoch=', name)
+
+        torch.save(d, name)
+        return name
+
 
 if __name__ == '__main__':
     parser = ArgumentParser()
