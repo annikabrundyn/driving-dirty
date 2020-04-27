@@ -150,9 +150,9 @@ class BasicAE(LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
-        parser.opt_list('--hidden_dim', type=int, default=128, options=[64, 128, 256, 512], tunable=True,
+        parser.opt_list('--hidden_dim', type=int, default=128, options=[128, 256, 512], tunable=True,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
-        parser.opt_list('--latent_dim', type=int, default=128, options=[32, 64, 128, 256, 512], tunable=True,
+        parser.opt_list('--latent_dim', type=int, default=128, options=[64, 128, 256, 512], tunable=True,
                             help='dimension of latent variables z')
 
         parser.add_argument('--input_width', type=int, default=306*6,
@@ -162,7 +162,7 @@ class BasicAE(LightningModule):
         parser.add_argument('--output_width', type=int, default=306)
         parser.add_argument('--output_height', type=int, default=256)
 
-        parser.opt_list('--batch_size', type=int, default=24, options=[64, 32, 24, 16, 10, 8], tunable=True)
+        parser.opt_list('--batch_size', type=int, default=16, options=[64, 32, 24, 16, 10, 8], tunable=False)
         parser.add_argument('--in_channels', type=int, default=3)
 
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')

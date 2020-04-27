@@ -170,7 +170,7 @@ class RoadMap(LightningModule):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
 
         # want to optimize this parameter
-        parser.opt_list('--batch_size', type=int, default=24, options=[24, 16, 10, 8], tunable=True)
+        parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
         #parser.add_argument('--batch_size', type=int, default=2)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
