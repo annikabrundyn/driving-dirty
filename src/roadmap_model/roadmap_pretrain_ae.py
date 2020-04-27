@@ -27,7 +27,7 @@ class RoadMap(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
-        self.__check_hparams(hparams)
+#        self.__check_hparams(hparams)
         self.hparams = hparams
         self.output_dim = 800 * 800
         #self.kernel_size = 4
@@ -42,9 +42,9 @@ class RoadMap(LightningModule):
         self.fc1 = nn.Linear(self.ae.latent_dim, self.output_dim)
         #self.fc2 = nn.Linear(200000, self.output_dim)
 
-    def __check_hparams(self, hparams):
-        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 16
-        self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
+ #   def __check_hparams(self, hparams):
+ #       self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 16
+ #       self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
 
     def wide_stitch_six_images(self, sample):
         # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
@@ -87,7 +87,7 @@ class RoadMap(LightningModule):
         pred_rm = self(x)
 
         # every 10 epochs we look at inputs + predictions
-        if batch_idx % 10 == 0:
+        if batch_idx % self.hparams.output_img_freq == 0:
             self._log_rm_images(x, target_rm, pred_rm, step_name)
 
         # flatten roadmap tensors, convert target rm from True/False to 1/0
@@ -177,6 +177,7 @@ class RoadMap(LightningModule):
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         parser.add_argument('--checkpoint_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
+        parser.add_argument('--output_img_freq', type=int, default=100)
         return parser
 
     # def patch_checkpoint(self, name):
