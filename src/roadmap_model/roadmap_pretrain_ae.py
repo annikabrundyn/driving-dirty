@@ -162,7 +162,7 @@ class RoadMap(LightningModule):
 
     def train_dataloader(self):
         loader = DataLoader(self.trainset,
-                            batch_size=self.batch_size,
+                            batch_size=self.hparams.batch_size,
                             shuffle=True,
                             num_workers=4,
                             collate_fn=collate_fn)
@@ -171,7 +171,7 @@ class RoadMap(LightningModule):
     def val_dataloader(self):
         # don't shuffle validation batches
         loader = DataLoader(self.validset,
-                            batch_size=self.batch_size,
+                            batch_size=self.hparams.batch_size,
                             shuffle=False,
                             num_workers=4,
                             collate_fn=collate_fn)
