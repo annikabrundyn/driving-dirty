@@ -123,7 +123,7 @@ class RoadMap(LightningModule):
     def validation_epoch_end(self, outputs):
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         val_tensorboard_logs = {'avg_val_loss': avg_val_loss}
-        return {'avg_val_loss': avg_val_loss, 'log': val_tensorboard_logs}
+        return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.0005)
