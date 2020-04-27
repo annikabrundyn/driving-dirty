@@ -175,7 +175,7 @@ class RoadMap(LightningModule):
         #parser.add_argument('--batch_size', type=int, default=2)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
-        parser.add_argument('--checkpoint', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
+        parser.add_argument('--checkpoint_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
         return parser
 
     def patch_checkpoint(self, name):
