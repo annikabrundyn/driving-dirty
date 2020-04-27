@@ -18,7 +18,7 @@ epochs       = 25 #30 before, 0 to go immediately to test...
 
 # optimizer parameter
 learning_rate = 1e-3
-weight_decay  = 0
+weight_decay  = 1e-3
 
 
 model = Car_Autoencoder(Inception_Autoencoder,Encoder,Decoder,InceptionE,BasicConv2d,in_ch=3,base_ch=32)
@@ -45,12 +45,12 @@ transform = torchvision.transforms.ToTensor()
 
 # All the images are saved in image_folder
 # All the labels are saved in the annotation_csv file
-image_folder = '/Users/noahkasmanoff/Desktop/Deep_Learning/car/dat/data/'
-#image_folder = '/scratch/nsk367/pytorch-use/DLSP20/dat/data/ '#'../dat/data/'
-annotation_csv = image_folder + 'annotation.csv'
+#image_folder = '/Users/noahkasmanoff/Desktop/Deep_Learning/car/dat/data/'
+image_folder = '/scratch/nsk367/pytorch-use/DLSP20/dat/data'#'../dat/data/'
+annotation_csv = image_folder + '/annotation.csv'
 
-unlabeled_scene_index_train = np.arange(1)
-unlabeled_scene_index_valid = np.arange(1,2)
+unlabeled_scene_index_train = np.arange(89)
+unlabeled_scene_index_valid = np.arange(89,106)
 
 unlabeled_trainset = UnlabeledDataset(image_folder=image_folder, scene_index=unlabeled_scene_index_train, 
                                       first_dim='sample', transform=transform)
