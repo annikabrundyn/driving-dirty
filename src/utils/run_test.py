@@ -9,10 +9,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 
-from data_helper import LabeledDataset
-from helper import compute_ats_bounding_boxes, compute_ts_road_map
+from src.utils.data_helper import LabeledDataset
+from src.utils.helper import compute_ats_bounding_boxes, compute_ts_road_map
 
-from model_loader import get_transform, ModelLoader
+from src.utils.model_loader import get_transform, ModelLoader
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
