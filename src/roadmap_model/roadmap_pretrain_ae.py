@@ -31,8 +31,7 @@ class RoadMap(LightningModule):
         self.hparams = hparams
         self.output_dim = 800 * 800
         #self.kernel_size = 4
-        path_checkpoint ='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt'
-        patched_ckpt_name = self.patch_checkpoint(path_checkpoint)
+        patched_ckpt_name = self.patch_checkpoint(self.hparams.checkpoint_path)
 
         # pretrained feature extractor - using our own trained Encoder
         self.ae = BasicAE.load_from_checkpoint(patched_ckpt_name)
