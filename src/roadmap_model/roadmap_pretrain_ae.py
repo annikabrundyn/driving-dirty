@@ -35,6 +35,7 @@ class RoadMap(LightningModule):
 
         # pretrained feature extractor - using our own trained Encoder
         self.ae = BasicAE.load_from_checkpoint(self.hparams.checkpoint_path)
+        self.frozen = True
         self.ae.freeze()
         self.ae.decoder = None
 
@@ -114,6 +115,11 @@ class RoadMap(LightningModule):
         self.logger.experiment.add_image(f'{step_name}_pred_roadmaps', pred_roadmaps, self.trainer.global_step)
 
     def training_step(self, batch, batch_idx):
+
+        if self.current_epoch >= 30 and self.frozen:
+            self.frozen=False
+            self.ae.unfreeze()
+
         train_loss, _, _ = self._run_step(batch, batch_idx, step_name='train')
         train_tensorboard_logs = {'train_loss': train_loss}
         return {'loss': train_loss, 'log': train_tensorboard_logs}
@@ -122,18 +128,17 @@ class RoadMap(LightningModule):
         val_loss, target_rm, pred_rm = self._run_step(batch, batch_idx, step_name='valid')
 
         # calculate threat score
-        val_ts = compute_ts_road_map(target_rm, pred_rm)
+        #val_ts = compute_ts_road_map(target_rm, pred_rm)
         val_ts_rounded = compute_ts_road_map(target_rm, pred_rm.round())
         #val_ts = torch.tensor(val_ts).type_as(val_loss)
 
-        return {'val_loss': val_loss, 'val_ts': val_ts, 'val_ts_rounded': val_ts_rounded}
+        return {'val_loss': val_loss, 'val_ts_rounded': val_ts_rounded}
 
     def validation_epoch_end(self, outputs):
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        avg_val_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+        #avg_val_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
         avg_val_ts_rounded = torch.stack([x['val_ts_rounded'] for x in outputs]).mean()
         val_tensorboard_logs = {'avg_val_loss': avg_val_loss,
-                                'avg_val_ts': avg_val_ts,
                                 'avg_val_ts_rounded': avg_val_ts_rounded}
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
@@ -182,6 +187,7 @@ class RoadMap(LightningModule):
 
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
+        #parser.opt.list('--learning_rate', type=float, default=0.005, options=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
         parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
