@@ -102,6 +102,7 @@ class RoadMap(LightningModule):
         # calculate mse loss between pixels
         loss = F.mse_loss(target_rm, pred_rm)
 
+        import pdb; pdb.set_trace()
         # compute threat score
         threat_score = compute_ts_road_map(target_rm, pred_rm)
 
