@@ -58,16 +58,15 @@ class RoadMap(LightningModule):
         return x
 
     def forward(self, x):
+        # wide stitch the 6 images in sample
+        x = self.wide_stitch_six_images(x)
+
         # note: can call forward(x) with self(x)
         # first find representations using the pretrained encoder
         representations = self.ae.encoder(x)
 
         # now run through MLP
         y = torch.sigmoid(self.fc1(representations))
-        #y = F.sigmoid(self.fc2(y))
-
-        # round values to 0 and 1
-        # y = y.round()
 
         # reshape prediction to be tensor with b x 800 x 800
         y = y.reshape(y.size(0), 800, 800)
@@ -77,17 +76,15 @@ class RoadMap(LightningModule):
     def _run_step(self, batch, batch_idx, step_name):
         sample, target, road_image = batch
 
-        # wide stitch the 6 images in sample
-        x = self.wide_stitch_six_images(sample)
-
         # change target roadmap from tuple len([800 x 800]) = b --> tensor [b x 800 x 800]
         target_rm = torch.stack(road_image, dim=0).float()
 
         # forward pass to find predicted roadmap
-        pred_rm = self(x)
+        pred_rm = self(sample)
 
         # every 10 epochs we look at inputs + predictions
         if batch_idx % self.hparams.output_img_freq == 0:
+            x = self.wide_stitch_six_images(sample)
             self._log_rm_images(x, target_rm, pred_rm, step_name)
 
         # flatten roadmap tensors, convert target rm from True/False to 1/0
