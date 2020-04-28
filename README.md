@@ -10,9 +10,22 @@ git clone https://github.com/annikabrundyn/driving-dirty
 
 # install project   
 cd driving-dirty
+
+# MAKE SURE TO INSTALL THE APPROPRIATE PYTORCH AND TORCHVISION
+
 pip install -e .   
-pip install -r requirements.txt
+pip install -r requirements.txt --ignore-installed
 ```
+
+# Predicting test images
+To run evaluations for class:
+
+```python
+cd src/utils
+python run_test.py --rm_ckpt_path '../../checkpoints/rm.ckpt'
+```
+
+
 # Training the Autoencoder
 
 ```

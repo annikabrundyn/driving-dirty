@@ -1,6 +1,6 @@
 import random
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
 import numpy as np
 
@@ -33,8 +33,16 @@ class RoadMap(LightningModule):
         self.output_dim = 800 * 800
         #self.kernel_size = 4
 
+        d = dict(
+            latent_dim = 64,
+            hidden_dim = 128,
+            batch_size = 16
+        )
+        hparams2 = Namespace(**d)
+
+
         # pretrained feature extractor - using our own trained Encoder
-        self.ae = BasicAE.load_from_checkpoint(self.hparams.checkpoint_path)
+        self.ae = BasicAE(hparams2)
         self.frozen = True
         self.ae.freeze()
         self.ae.decoder = None

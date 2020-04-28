@@ -21,6 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', type=str, default='data')
 parser.add_argument('--testset', action='store_true')
 parser.add_argument('--verbose', action='store_true')
+parser.add_argument('--rm_ckpt_path', type=str, default='path/to/rm.ckpt')
 opt = parser.parse_args()
 
 image_folder = opt.data_dir
@@ -45,7 +46,7 @@ dataloader = torch.utils.data.DataLoader(
     num_workers=4
     )
 
-model_loader = ModelLoader()
+model_loader = ModelLoader(rm_ckpt_path=opt.rm_ckpt_path)
 
 total = 0
 total_ats_bounding_boxes = 0

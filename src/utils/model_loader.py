@@ -11,6 +11,8 @@ import torchvision
 # import your model class
 # import ...
 from src.roadmap_model.roadmap_pretrain_ae import RoadMap
+from argparse import Namespace
+
 
 # Put your transform function here, we will use it for our dataloader
 def get_transform(): 
@@ -24,25 +26,15 @@ class ModelLoader():
     team_member = ['ab8690']
     contact_email = '@nyu.edu'
 
-    def __init__(self, model_file='roadmap_pretrain.py'):
-        # You should 
-        #       1. create the model object
-        #       2. load your state_dict
-        #       3. call cuda()
-        # self.model = ...
-        from argparse import Namespace
-        import os
-
-        dir = os.getcwd()
+    def __init__(self, rm_ckpt_path):
         args = dict(
-            checkpoint_path=os.path.join(dir, 'rssc.ckpt'),
-            rm_ckpt_path=os.path.join(dir, 'rm.ckpt'),
+            rm_ckpt_path=rm_ckpt_path,
         )
         hparams = Namespace(**args)
 
-        self.roadmap_model = RoadMap.load_from_checkpoint(hparams.rm_chkpt_path)
-        self.roadmap_model.cuda(0)
-        self.roadmap_model.freeze()
+        self.model = RoadMap.load_from_checkpoint(hparams.rm_ckpt_path, map_location=torch.device('cpu'))
+        self.model.cuda(0)
+        self.model.freeze()
 
     def get_bounding_boxes(self, samples):
         # samples is a cuda tensor with size [batch_size, 6, 3, 256, 306]
@@ -55,7 +47,7 @@ class ModelLoader():
         # samples is a cuda tensor with size [batch_size, 6, 3, 256, 306]
         # You need to return a cuda tensor with size [batch_size, 800, 800]
 
-        roadmap = self.roadmap_model(samples)
+        roadmap = self.model(samples.cuda(0))
         roadmap = roadmap > 0.5
         
         return roadmap
