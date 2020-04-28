@@ -18,6 +18,8 @@ from src.utils.helper import collate_fn
 
 from src.autoencoder.autoencoder import BasicAE
 
+from src.utils.helper import compute_ts_road_map
+
 random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
@@ -27,24 +29,19 @@ class RoadMap(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
-        self.__check_hparams(hparams)
         self.hparams = hparams
         self.output_dim = 800 * 800
         #self.kernel_size = 4
-        #patched_ckpt_name = self.patch_checkpoint(self.hparams.checkpoint_path)
 
         # pretrained feature extractor - using our own trained Encoder
         self.ae = BasicAE.load_from_checkpoint(self.hparams.checkpoint_path)
+        self.frozen = True
         self.ae.freeze()
         self.ae.decoder = None
 
         # MLP layers: feature embedding --> predict binary roadmap
         self.fc1 = nn.Linear(self.ae.latent_dim, self.output_dim)
         #self.fc2 = nn.Linear(200000, self.output_dim)
-
-    def __check_hparams(self, hparams):
-        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 16
-        self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
 
     def wide_stitch_six_images(self, sample):
         # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
@@ -61,13 +58,15 @@ class RoadMap(LightningModule):
         return x
 
     def forward(self, x):
+        # wide stitch the 6 images in sample
+        x = self.wide_stitch_six_images(x)
+
         # note: can call forward(x) with self(x)
         # first find representations using the pretrained encoder
         representations = self.ae.encoder(x)
 
         # now run through MLP
         y = torch.sigmoid(self.fc1(representations))
-        #y = F.sigmoid(self.fc2(y))
 
         # reshape prediction to be tensor with b x 800 x 800
         y = y.reshape(y.size(0), 800, 800)
@@ -77,34 +76,32 @@ class RoadMap(LightningModule):
     def _run_step(self, batch, batch_idx, step_name):
         sample, target, road_image = batch
 
-        # wide stitch the 6 images in sample
-        x = self.wide_stitch_six_images(sample)
-
         # change target roadmap from tuple len([800 x 800]) = b --> tensor [b x 800 x 800]
-        target_rm = torch.stack(road_image, dim=0)
+        target_rm = torch.stack(road_image, dim=0).float()
 
         # forward pass to find predicted roadmap
-        pred_rm = self(x)
+        pred_rm = self(sample)
 
         # every 10 epochs we look at inputs + predictions
-        if batch_idx % 10 == 0:
+        if batch_idx % self.hparams.output_img_freq == 0:
+            x = self.wide_stitch_six_images(sample)
             self._log_rm_images(x, target_rm, pred_rm, step_name)
 
         # flatten roadmap tensors, convert target rm from True/False to 1/0
-        target_rm = target_rm.view(target_rm.size(0), -1).float()
-        pred_rm = pred_rm.view(pred_rm.size(0), -1)
+        #target_rm = target_rm.view(target_rm.size(0), -1)
+        #pred_rm = pred_rm.view(pred_rm.size(0), -1)
 
         # calculate mse loss between pixels
         loss = F.mse_loss(target_rm, pred_rm)
 
-        return loss
+        return loss, target_rm, pred_rm
 
     def _log_rm_images(self, x, target_rm, pred_rm, step_name, limit=1):
         # log 6 images stitched wide, target/true roadmap and predicted roadmap
         # take first image in the batch
         x = x[:limit]
         target_rm = target_rm[:limit]
-        pred_rm = pred_rm[:limit]
+        pred_rm = pred_rm[:limit].round()
 
         input_images = torchvision.utils.make_grid(x)
         target_roadmaps = torchvision.utils.make_grid(target_rm)
@@ -115,21 +112,35 @@ class RoadMap(LightningModule):
         self.logger.experiment.add_image(f'{step_name}_pred_roadmaps', pred_roadmaps, self.trainer.global_step)
 
     def training_step(self, batch, batch_idx):
-        train_loss = self._run_step(batch, batch_idx, step_name='train')
+
+        if self.current_epoch >= 30 and self.frozen:
+            self.frozen=False
+            self.ae.unfreeze()
+
+        train_loss, _, _ = self._run_step(batch, batch_idx, step_name='train')
         train_tensorboard_logs = {'train_loss': train_loss}
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        val_loss = self._run_step(batch, batch_idx, step_name='valid')
-        return {'val_loss': val_loss}
+        val_loss, target_rm, pred_rm = self._run_step(batch, batch_idx, step_name='valid')
+
+        # calculate threat score
+        #val_ts = compute_ts_road_map(target_rm, pred_rm)
+        val_ts_rounded = compute_ts_road_map(target_rm, pred_rm.round())
+        #val_ts = torch.tensor(val_ts).type_as(val_loss)
+
+        return {'val_loss': val_loss, 'val_ts_rounded': val_ts_rounded}
 
     def validation_epoch_end(self, outputs):
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        val_tensorboard_logs = {'avg_val_loss': avg_val_loss}
+        #avg_val_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+        avg_val_ts_rounded = torch.stack([x['val_ts_rounded'] for x in outputs]).mean()
+        val_tensorboard_logs = {'avg_val_loss': avg_val_loss,
+                                'avg_val_ts_rounded': avg_val_ts_rounded}
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.0005)
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
 
     def prepare_data(self):
         image_folder = self.hparams.link
@@ -152,7 +163,7 @@ class RoadMap(LightningModule):
 
     def train_dataloader(self):
         loader = DataLoader(self.trainset,
-                            batch_size=self.batch_size,
+                            batch_size=self.hparams.batch_size,
                             shuffle=True,
                             num_workers=4,
                             collate_fn=collate_fn)
@@ -161,7 +172,7 @@ class RoadMap(LightningModule):
     def val_dataloader(self):
         # don't shuffle validation batches
         loader = DataLoader(self.validset,
-                            batch_size=self.batch_size,
+                            batch_size=self.hparams.batch_size,
                             shuffle=False,
                             num_workers=4,
                             collate_fn=collate_fn)
@@ -172,26 +183,14 @@ class RoadMap(LightningModule):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
 
         # want to optimize this parameter
-        parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
-        #parser.add_argument('--batch_size', type=int, default=2)
+        #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
+        parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+        parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         parser.add_argument('--checkpoint_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
+        parser.add_argument('--output_img_freq', type=int, default=1000)
         return parser
-
-    # def patch_checkpoint(self, name):
-    #     from pytorch_lightning.core.saving import ModelIO, load_hparams_from_tags_csv
-    #     import re
-    #     from argparse import Namespace
-    #
-    #     d = torch.load(name, map_location=torch.device('cpu'))
-    #     csv_path = name.split('checkpoints')[0]
-    #     hparams = load_hparams_from_tags_csv(f'{csv_path}/meta_tags.csv')
-    #     d['hparams'] = hparams.__dict__
-    #     name = re.sub('epoch=', 'fix_epoch=', name)
-    #
-    #     torch.save(d, name)
-    #     return name
 
 
 if __name__ == '__main__':
