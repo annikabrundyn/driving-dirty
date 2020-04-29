@@ -21,9 +21,9 @@ def get_transform():
 
 class ModelLoader():
     # Fill the information for your team
-    team_name = 'roadrage'
+    team_name = 'latent_registration'
     round_number = 1
-    team_member = ['ab8690']
+    team_member = ['ab8690', 'fg746', 'nsk367']
     contact_email = '@nyu.edu'
 
     def __init__(self, rm_ckpt_path):
@@ -31,7 +31,7 @@ class ModelLoader():
             rm_ckpt_path=rm_ckpt_path,
         )
         hparams = Namespace(**args)
-
+        # TODO: rename pretrained path from prince path to local path
         self.model = RoadMap.load_from_checkpoint(hparams.rm_ckpt_path, map_location=torch.device('cpu'))
         self.model.cuda(0)
         self.model.freeze()

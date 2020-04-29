@@ -1,10 +1,12 @@
 import random
+import numpy as np
+import torch
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
 
 from argparse import ArgumentParser, Namespace
 
-import numpy as np
-
-import torch
 import torchvision
 from torch import nn
 from torch.nn import functional as F
@@ -13,16 +15,13 @@ from torch.utils.data import DataLoader
 from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
+from src import image_names
+
+from src.utils import convert_map_to_lane_map
 from src.utils.data_helper import LabeledDataset
 from src.utils.helper import collate_fn
-
 from src.autoencoder.autoencoder import BasicAE
-
 from src.utils.helper import compute_ts_road_map
-
-random.seed(0)
-np.random.seed(0)
-torch.manual_seed(0)
 
 
 class RoadMap(LightningModule):
@@ -33,6 +32,8 @@ class RoadMap(LightningModule):
         self.output_dim = 800 * 800
         #self.kernel_size = 4
 
+        # TODO: add pretrained weight path
+        # TODO: remove this to train models again
         d = dict(
             latent_dim = 64,
             hidden_dim = 128,
@@ -40,7 +41,7 @@ class RoadMap(LightningModule):
         )
         hparams2 = Namespace(**d)
 
-
+        # BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
         # pretrained feature extractor - using our own trained Encoder
         self.ae = BasicAE(hparams2)
         self.frozen = True
@@ -196,7 +197,7 @@ class RoadMap(LightningModule):
         parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
-        parser.add_argument('--checkpoint_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
+        parser.add_argument('--pretrained_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=1000)
         return parser
 
