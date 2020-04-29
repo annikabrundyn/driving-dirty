@@ -15,8 +15,6 @@ from torch.utils.data import DataLoader
 from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
-from src import image_names
-
 from src.utils import convert_map_to_lane_map
 from src.utils.data_helper import LabeledDataset
 from src.utils.helper import collate_fn

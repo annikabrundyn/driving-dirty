@@ -84,7 +84,6 @@ class BasicAE(LightningModule):
             self._log_images(y, y_hat, step_name)
 
         # consider replacing this reconstruction loss with something else
-        # note - flatten both the true and the predicted to calculated mse loss
         loss = F.mse_loss(y, y_hat)
 
         return loss
