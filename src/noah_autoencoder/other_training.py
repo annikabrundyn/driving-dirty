@@ -12,16 +12,16 @@ from src.utils.helper import collate_fn, draw_box
 
 ## Neccessary imports
 
-batch_size   = 4
+batch_size   =8
 epochs       = 25 #30 before, 0 to go immediately to test... 
 
 
 # optimizer parameter
-learning_rate = 1e-3
-weight_decay  = 1e-3
+learning_rate = 1e-4
+weight_decay  = 1e-4
 
 
-model = Car_Autoencoder(Inception_Autoencoder,Encoder,Decoder,InceptionE,BasicConv2d,in_ch=3,base_ch=32)
+model = Car_Autoencoder(Inception_Autoencoder,Encoder,Decoder,InceptionE,BasicConv2d,in_ch=3,base_ch=16)
 
 f_out = 'autoencoder_results_%.1e_%.1e_%d_%s.txt'\
                %(learning_rate, weight_decay, batch_size,str(epochs))
