@@ -94,21 +94,24 @@ class Boxes(LightningModule):
         sample, target, road_image = batch
 
         # transform the target from bb coordinates into padded tensors
+        # (b) tuple of dicts -> [b, output_dim]
         target_bb = self.pad_bb_coordinates(target)
         target_bb = target_bb.type_as(sample[0])
 
         # forward pass to find predicted bb tensor
+        # -> [b, output_dim]
         pred_bb = self(sample)
 
         # calculate the MSE loss between coordinates
         loss = F.mse_loss(target_bb, pred_bb)
 
         # draw coordinates to visualize
-        # every however many epochs we look at inputs + predictions
+        # every few epochs we look at inputs + predictions
         if batch_idx % self.hparams.output_img_freq == 0:
+            import pdb; pdb.set_trace()
             x = self.wide_stitch_six_images(sample)
 
-            # reshape target
+            # in order to visualize we have to reshape target
             # (b, 8*100) -> (8*100)
             target_bb_eg = target_bb[0]
             pred_bb_eg = pred_bb[0]

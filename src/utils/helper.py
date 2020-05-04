@@ -104,10 +104,16 @@ def draw_box(ax, corners, color):
     ax.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
 
 def compute_ats_bounding_boxes(boxes1, boxes2):
+    # boxes1, boxes2 have dim [num_boxes, 2, 4]
+
+    # save int num of boxes
     num_boxes1 = boxes1.size(0)
     num_boxes2 = boxes2.size(0)
 
+    # this finds the max x coordinate for every box in the image
+    # --> dim [num_boxes1]
     boxes1_max_x = boxes1[:, 0].max(dim=1)[0]
+    # this finds the min x coordinate for every box in the image
     boxes1_min_x = boxes1[:, 0].min(dim=1)[0]
     boxes1_max_y = boxes1[:, 1].max(dim=1)[0]
     boxes1_min_y = boxes1[:, 1].min(dim=1)[0]
@@ -117,6 +123,7 @@ def compute_ats_bounding_boxes(boxes1, boxes2):
     boxes2_max_y = boxes2[:, 1].max(dim=1)[0]
     boxes2_min_y = boxes2[:, 1].min(dim=1)[0]
 
+    # condition1_matrix has dim [num_boxes1, num_boxes2] of True/False
     condition1_matrix = (boxes1_max_x.unsqueeze(1) > boxes2_min_x.unsqueeze(0))
     condition2_matrix = (boxes1_min_x.unsqueeze(1) < boxes2_max_x.unsqueeze(0))
     condition3_matrix = (boxes1_max_y.unsqueeze(1) > boxes2_min_y.unsqueeze(0))
