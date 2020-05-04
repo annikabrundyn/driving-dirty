@@ -168,7 +168,8 @@ class Boxes(LightningModule):
         loader = DataLoader(self.trainset,
                             batch_size=self.hparams.batch_size,
                             shuffle=True,
-                            num_workers=2,
+                            drop_last=True,
+                            num_workers=4,
                             collate_fn=collate_fn)
         return loader
 
@@ -177,7 +178,8 @@ class Boxes(LightningModule):
         loader = DataLoader(self.validset,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,
-                            num_workers=2,
+                            drop_last=True,
+                            num_workers=4,
                             collate_fn=collate_fn)
         return loader
 
