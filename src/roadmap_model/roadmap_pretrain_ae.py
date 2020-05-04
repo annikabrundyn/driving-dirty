@@ -60,8 +60,7 @@ class RoadMap(LightningModule):
         # rearrange axes and reshape to wide format
         b, num_imgs, c, h, w = x.size()
         x = x.permute(0, 2, 3, 1, 4).reshape(b, c, h, -1)
-        assert x.size(-1) == 6 * 306
-
+        #assert x.size(-1) == 6 * 306
         return x
 
     def forward(self, x):

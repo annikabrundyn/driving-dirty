@@ -156,3 +156,5 @@ src/__pycache__/*
 src/autoencoder/lightning_logs/
 
 checkpoints/
+lightning_logs/
+

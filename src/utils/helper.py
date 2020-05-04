@@ -4,11 +4,51 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+import matplotlib.pyplot as plt
 
 from shapely.geometry import Polygon
 
 
+def plot_image(target):
+    fig, ax = plt.subplots()
+    road_image_ex = torch.zeros(800, 800)
+    _ = plt.imshow(road_image_ex, cmap='binary')
 
+    for i, bb in enumerate(target[0]['bounding_box']):
+        # You can check the implementation of the draw box to understand how it works
+        draw_boxs(ax, bb, color="black")
+
+    img_data = fig2data(fig)
+    img_data = img_data[120: -125, 135:-109]
+    return img_data
+
+
+def fig2data(fig):
+    """
+    @brief Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it
+    @param fig a matplotlib figure
+    @return a numpy 3D array of RGBA values
+    """
+    # draw the renderer
+    fig.canvas.draw()
+
+    # Get the RGBA buffer from the figure
+    w, h = fig.canvas.get_width_height()
+    buf = np.fromstring(fig.canvas.tostring_argb(), dtype=np.uint8)
+    buf.shape = (w, h, 4)
+
+    # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
+    buf = np.roll(buf, 3, axis=2)
+    return buf
+
+
+def draw_boxs(ax, corners, color):
+    point_squence = torch.stack([corners[:, 0], corners[:, 1], corners[:, 3], corners[:, 2], corners[:, 0]])
+
+    # the corners are in meter and time 10 will convert them in pixels
+    # Add 400, since the center of the image is at pixel (400, 400)
+    # The negative sign is because the y axis is reversed for matplotlib
+    plt.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
 
 def convert_map_to_lane_map(ego_map, binary_lane):
     mask = (ego_map[0,:,:] == ego_map[1,:,:]) * (ego_map[1,:,:] == ego_map[2,:,:]) + (ego_map[0,:,:] == 250 / 255)
