@@ -36,7 +36,7 @@ def plot_image(target):
     for i, bb in enumerate(target):
         # bb = (2, 4)
         # You can check the implementation of the draw box to understand how it works
-        draw_boxs(ax, bb, color="black")
+        draw_boxs(ax, bb.cpu(), color="black")
 
     img_data = fig2data(fig)
     img_data = img_data[120: -125, 135:-109]
