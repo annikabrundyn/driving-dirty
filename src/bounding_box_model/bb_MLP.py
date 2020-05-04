@@ -67,10 +67,14 @@ class Boxes(LightningModule):
     def pad_bb_coordinates(self, target):
         # loop over the items in the batch
         # target is a tuple of len batch_size
-        output = torch.zeros(self.hparams.batch_size, self.output_dim)
+        output = torch.zeros(self.hparams.batch_size, self.output_dim//8, 2, 4)
         for i, sample in enumerate(target):
-            flat_coords = sample['bounding_box'].reshape(-1)
-            output[i, 0:flat_coords.size(0)] = flat_coords
+            flat_coords = sample['bounding_box']
+            num_bb = flat_coords.size(0)
+            output[i, 0:num_bb, ...] = flat_coords
+
+        # (b, max_bb, 2, 4) -> (b, max_bb*2*4)
+        output = output.view(output.size(0), -1)
         return output
 
     def forward(self, x):
@@ -106,7 +110,6 @@ class Boxes(LightningModule):
             pred_bb_eg = pred_bb[0]
 
             # (8*100) -> (100, 2, 4)
-            # TODO: check
             target_bb_eg = target_bb_eg.reshape(self.hparams.max_bb, 2, 4)
             pred_bb_eg = pred_bb_eg.reshape(self.hparams.max_bb, 2, 4)
 
@@ -117,7 +120,6 @@ class Boxes(LightningModule):
             log_rm_images(self, x, y_boxes, y_hat_boxes, step_name)
 
         return loss, target_bb, pred_bb
-
 
     def training_step(self, batch, batch_idx):
 
