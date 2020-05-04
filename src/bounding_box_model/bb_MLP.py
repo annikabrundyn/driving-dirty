@@ -23,7 +23,7 @@ from argparse import ArgumentParser, Namespace
 from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
-from src.utils.helper import collate_fn, plot_image, log_rm_images
+from src.utils.helper import collate_fn, plot_image, log_bb_images, plot_all_boxes_new
 from src.utils.data_helper import LabeledDataset
 
 from src.autoencoder.autoencoder import BasicAE
@@ -31,9 +31,6 @@ from src.autoencoder.autoencoder import BasicAE
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
-from src.utils.helper import draw_box
-
 
 class Boxes(LightningModule):
 
@@ -66,16 +63,23 @@ class Boxes(LightningModule):
         return x
 
     def pad_bb_coordinates(self, target):
-        # loop over the items in the batch
         # target is a tuple of len batch_size
-        output = torch.zeros(self.hparams.batch_size, self.output_dim//8, 2, 4)
+
+        # initialize padded output vector with dim [b, max_bb, 2, 4]
+        output = torch.zeros(self.hparams.batch_size, self.hparams.max_bb, 2, 4)
+
+        # loop over the items in the batch
         for i, sample in enumerate(target):
+            # dim is [num_bb, 2, 4]
             flat_coords = sample['bounding_box']
+
+            # get the num of bounding boxes in this image
             num_bb = flat_coords.size(0)
+
+            # replace non-zero box coordinates in padded vector
             output[i, 0:num_bb, ...] = flat_coords
 
-        # (b, max_bb, 2, 4) -> (b, max_bb*2*4)
-        output = output.view(output.size(0), -1)
+        # output has dim [b, max_bb, 2, 4]
         return output
 
     def forward(self, x):
@@ -88,43 +92,47 @@ class Boxes(LightningModule):
         y = F.relu(self.fc1(representations))
         y = self.fc2(y)
 
+        # reshape the predictions to be:
+        # [b, max_bb*2*4] -> [b, max_bb, 2, 4]
+        y = y.reshape(y.size(0), self.hparams.max_bb, 2, 4)
+
         return y
 
     def _run_step(self, batch, batch_idx, step_name):
         sample, target, road_image = batch
 
         # transform the target from bb coordinates into padded tensors
-        # (b) tuple of dicts -> [b, output_dim]
+        # (b) tuple of dicts -> [b, max_bb, 2, 4]
         target_bb = self.pad_bb_coordinates(target)
         target_bb = target_bb.type_as(sample[0])
 
         # forward pass to find predicted bb tensor
-        # -> [b, output_dim]
+        # -> [b, max_bb, 4, 2]
         pred_bb = self(sample)
 
-        # calculate the MSE loss between coordinates
-        loss = F.mse_loss(target_bb, pred_bb)
-
-        # draw coordinates to visualize
-        # every few epochs we look at inputs + predictions
+        # every few epochs we visualize inputs + predictions
         if batch_idx % self.hparams.output_img_freq == 0:
-            import pdb; pdb.set_trace()
+            # x dim: [b, 3, 256, 1836]
             x = self.wide_stitch_six_images(sample)
 
-            # in order to visualize we have to reshape target
-            # (b, 8*100) -> (8*100)
-            target_bb_eg = target_bb[0]
-            pred_bb_eg = pred_bb[0]
+            # take the first image in batch
+            # [b, max_bb, 2, 4] -> [max_bb, 2, 4]
+            target_bb0 = target_bb[0]
+            pred_bb0 = pred_bb[0]
 
-            # (8*100) -> (100, 2, 4)
-            target_bb_eg = target_bb_eg.reshape(self.hparams.max_bb, 2, 4)
-            pred_bb_eg = pred_bb_eg.reshape(self.hparams.max_bb, 2, 4)
+            # have to reshape pred bb from [max_bb*2*4] -> [max_bb, 2, 4]
+            # target_bb0 = target_bb0.reshape(self.hparams.max_bb, 2, 4)
+            # pred_bb0 = pred_bb0.reshape(self.hparams.max_bb, 2, 4)
 
-            # (100, 2, 4) -> (b=1, 1, 755, 756)
-            y_hat_boxes = plot_image(pred_bb_eg)
-            y_boxes = plot_image(target_bb_eg)
+            # [100, 2, 4] -> matplotlib figure
+            pred_img = plot_all_boxes_new(pred_bb0)
+            target_img = plot_all_boxes_new(target_bb0)
 
-            log_rm_images(self, x, y_boxes, y_hat_boxes, step_name)
+            log_bb_images(self, x, target_img, pred_img, step_name)
+
+        # calculate the MSE loss between coordinates
+        # note: F.mse_loss calculates element wise MSE loss so I don't have to flatten tensors
+        loss = F.mse_loss(target_bb, pred_bb)
 
         return loss, target_bb, pred_bb
 
@@ -203,6 +211,7 @@ class Boxes(LightningModule):
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         parser.add_argument('--pretrained_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=1000)
+
         return parser
 
 if __name__ == '__main__':
