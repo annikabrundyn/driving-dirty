@@ -29,6 +29,7 @@ def log_rm_images(self, x, target_rm, pred_rm, step_name, limit=1):
 def plot_image(target):
     # (100, 2, 4)
 
+    target = target.detach()
     fig, ax = plt.subplots()
     road_image_ex = torch.zeros(800, 800)
     _ = plt.imshow(road_image_ex, cmap='binary')
