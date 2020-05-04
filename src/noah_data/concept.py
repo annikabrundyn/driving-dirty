@@ -3,6 +3,8 @@ Quick proof of concept script:
 
 Goal is to iterate through the labeled dataset, and convert the coordinates received into a roadmap like obect
 
+
+Saves as box.npy, which should be right? 
 """
 
 import numpy as np
@@ -70,21 +72,12 @@ print(image.shape)
 print("Here's the resized shape")
 img = Image.open('test.png')
 img.thumbnail((800, 800))  # resizes image in-place
-img = np.array(img)
-img = np.mean(img,axis=2)
+img = np.array(img)[:,:,0] #only this channel matters? 
 
-print(img.shape)
+#mask out to make this look normal 
+img
+mask = img >250
+img[~mask] = 1.
+img[mask] = 0.
 
-
-
-np.save('boxes.npy',img)
-
-#saved and done
-print(img.max())
-
-print(img.mean())
-
-bb = np.load('boxes.npy')
-plt.figure()
-plt.imshow(bb)
-plt.show()
+np.save('box.npy',img)
