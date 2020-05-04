@@ -51,7 +51,7 @@ class Boxes(LightningModule):
 
         # MLP layers
         self.fc1 = nn.Linear(self.ae.latent_dim, self.output_dim//2)
-        self.fc1 = nn.Linear(self.output_dim//2, self.output_dim)
+        self.fc2 = nn.Linear(self.output_dim//2, self.output_dim)
 
     def wide_stitch_six_images(self, sample):
         # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
