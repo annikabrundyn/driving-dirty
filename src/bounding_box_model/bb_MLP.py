@@ -92,6 +92,7 @@ class Boxes(LightningModule):
 
         # transform the target from bb coordinates into padded tensors
         target_bb = self.pad_bb_coordinates(target)
+        target_bb = target_bb.type_as(sample)
 
         # forward pass to find predicted bb tensor
         pred_bb = self(sample)
