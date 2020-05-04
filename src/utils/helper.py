@@ -9,17 +9,46 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Polygon
 
 
+def log_rm_images(self, x, target_rm, pred_rm, step_name, limit=1):
+    # log 6 images stitched wide, target/true roadmap and predicted roadmap
+    # take first image in the batch
+    x = x[:limit]
+    target_rm = target_rm[:limit]
+    pred_rm = pred_rm[:limit].round()
+
+    input_images = torchvision.utils.make_grid(x)
+    target_roadmaps = torchvision.utils.make_grid(target_rm)
+    pred_roadmaps = torchvision.utils.make_grid(pred_rm)
+
+    self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
+    self.logger.experiment.add_image(f'{step_name}_target_roadmaps', target_roadmaps,
+                                     self.trainer.global_step)
+    self.logger.experiment.add_image(f'{step_name}_pred_roadmaps', pred_roadmaps, self.trainer.global_step)
+
+
 def plot_image(target):
+    # (100, 2, 4)
+
     fig, ax = plt.subplots()
     road_image_ex = torch.zeros(800, 800)
     _ = plt.imshow(road_image_ex, cmap='binary')
 
-    for i, bb in enumerate(target[0]['bounding_box']):
+    for i, bb in enumerate(target):
+        # bb = (2, 4)
         # You can check the implementation of the draw box to understand how it works
         draw_boxs(ax, bb, color="black")
 
     img_data = fig2data(fig)
     img_data = img_data[120: -125, 135:-109]
+
+    img_data = torch.tensor(img_data).type_as(target)
+
+    # (755, 756, 4) -> (1, 755, 756)
+    img_data = img_data[:, :, 0].unsqueeze(0)
+
+    # (c, h, w) -> (b, c, h, w)
+    img_data = img_data.unsqueeze(0)
+
     return img_data
 
 

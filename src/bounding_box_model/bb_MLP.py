@@ -23,12 +23,14 @@ from argparse import ArgumentParser, Namespace
 from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
-from src.utils.helper import collate_fn, plot_image
+from src.utils.helper import collate_fn, plot_image, log_rm_images
 from src.utils.data_helper import LabeledDataset
 
 from src.autoencoder.autoencoder import BasicAE
 
-import matplotlib as plt
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 from src.utils.helper import draw_box
 
@@ -90,18 +92,30 @@ class Boxes(LightningModule):
         # forward pass to find predicted bb tensor
         pred_bb = self(sample)
 
+        # calculate the MSE loss between coordinates
+        loss = F.mse_loss(target_bb, pred_bb)
+
         # draw coordinates to visualize
         # every however many epochs we look at inputs + predictions
         if batch_idx % self.hparams.output_img_freq == 0:
             x = self.wide_stitch_six_images(sample)
 
-            y_hat_boxes = plot_image(FILL_IN)
-            y_boxes = plot_image(FILL_IN)
+            # reshape target
+            # (b, 8*100) -> (8*100)
+            target_bb_eg = target_bb[0]
+            pred_bb_eg = pred_bb[0]
 
-            self._log_rm_images(x, target_bb, pred_bb, step_name)
+            # (8*100) -> (100, 2, 4)
+            # TODO: check
+            target_bb_eg = target_bb_eg.reshape(self.hparams.max_bb, 2, 4)
+            pred_bb_eg = pred_bb_eg.reshape(self.hparams.max_bb, 2, 4)
 
-        # calculate the MSE loss between coordinates
-        loss = F.mse_loss(target_bb, pred_bb)
+            # (100, 2, 4) -> (b=1, 1, 755, 756)
+            y_hat_boxes = plot_image(pred_bb_eg)
+            y_boxes = plot_image(target_bb_eg)
+
+            log_rm_images(self, x, y_boxes, y_hat_boxes, step_name)
+
         return loss, target_bb, pred_bb
 
 
