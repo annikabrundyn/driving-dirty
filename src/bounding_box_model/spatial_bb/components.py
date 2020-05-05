@@ -28,7 +28,6 @@ class SpatialMappingCNN(nn.Module):
     def forward(self, x):
         # (b, 6, 3, 256, 306) -> (b, 32, 256, 256)
 
-        x = x.half()
         # ---------------
         # DO NOT ROTATE THESE
         # ---------------
@@ -41,6 +40,7 @@ class SpatialMappingCNN(nn.Module):
         # ---------------
         # ROTATE
         # ---------------
+        import pdb; pdb.set_trace()
         b = x[:, 4, ...]
         b = b.flip(1).transpose(2, 1)
         b = F.relu(self.b_conv(b))
