@@ -114,7 +114,7 @@ class BoxesMergingCNN(nn.Module):
         x = F.relu(self.up_conv_1(x))
         x = F.relu(self.up_conv_2(x))
         x = F.relu(self.up_conv_3(x))
-        x = F.sigmoid(self.up_conv_4(x))
+        x = self.up_conv_4(x)
 
         return x
 
