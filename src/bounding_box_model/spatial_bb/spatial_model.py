@@ -108,7 +108,7 @@ class BBSpatialModel(LightningModule):
         sample = sample.type_as(sample[0])
 
         # forward pass to find predicted roadmap
-        pred_bb_img = self.forward(sample)
+        pred_bb_img = self(sample)
 
         # every 10 epochs we look at inputs + predictions
         # if True:
@@ -120,15 +120,18 @@ class BBSpatialModel(LightningModule):
             self._log_rm_images(x0, target_bb_img0, pred_bb_img0, step_name)
 
         # calculate mse loss between pixels
-        loss = F.mse_loss(target_bb_img, pred_bb_img)
+        batch_size = target_bb_img.size(0)
+        target_bb_img = target_bb_img.view(batch_size, -1)
+        pred_bb_img = pred_bb_img.view(batch_size, -1)
+        loss = F.binary_cross_entropy(pred_bb_img, target_bb_img)
 
         return loss, target_bb_img, pred_bb_img
 
     def _log_rm_images(self, x, target, pred, step_name, limit=1):
 
-        input_images = torchvision.utils.make_grid(x)
-        target = torchvision.utils.make_grid(target)
-        pred = torchvision.utils.make_grid(pred)
+        input_images = torchvision.utils.make_grid(x, normalize=True)
+        target = torchvision.utils.make_grid(target, normalize=True)
+        pred = torchvision.utils.make_grid(pred, normalize=True)
 
         self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
         self.logger.experiment.add_image(f'{step_name}_target_bbs', target, self.trainer.global_step)
