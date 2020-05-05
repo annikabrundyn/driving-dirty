@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from src.autoencoder.autoencoder import BasicAE
 from src.roadmap_model.roadmap_pretrain_ae import RoadMap
 from src.bounding_box_model.bb_MLP import Boxes
-from src.bounding_box_model.spatial_bb.spatial_model import  BBSpatialModel
+from src.bounding_box_model.spatial_bb.spatial_model import BBSpatialModel
 from test_tube import HyperOptArgumentParser, SlurmCluster
 import os, sys
 
@@ -15,7 +15,7 @@ MODEL_NAMES = {
     'basic_ae': BasicAE,
     'roadmap': RoadMap,
     'bb': Boxes,
-    'spatial_bb': BBSpatialModel
+    'spatial_bb': BBSpatialModel,
 }
 
 def main_local(hparams):
