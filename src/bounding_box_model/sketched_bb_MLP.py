@@ -1,63 +1,59 @@
+'''
+This script should contain the model that takes the images, converts the bounding box output to images,
+does feature extraction, tries to predict bounding box image and then converts the image back to coordinate
+predictions.
+'''
+
+import os
 import random
 import numpy as np
 import torch
+
 random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
 
-from argparse import ArgumentParser, Namespace
-
 import torchvision
-from  torchvision  import transforms
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
+from argparse import ArgumentParser, Namespace
+
 from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
-from src.utils import convert_map_to_lane_map
+from src.utils.helper import collate_fn, plot_image, log_bb_images, plot_all_boxes_new
 from src.utils.data_helper import LabeledDataset
-from src.utils.helper import collate_fn, boxes_to_binary_map
 
-
+from src.noah_data import sketch_regions
 from src.autoencoder.autoencoder import BasicAE
-from src.bounding_box_model.spatial_bb.components import SpatialMappingCNN, BoxesMergingCNN
 
-from src.utils.helper import compute_ts_road_map
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
-
-class BBSpatialModel(LightningModule):
+class Boxes(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
         self.hparams = hparams
-        self.output_dim = 800 * 800
-        #self.kernel_size = 4
 
-        # TODO: add pretrained weight path
-        # TODO: remove this to train models again
-        d = dict(
-            latent_dim = 64,
-            hidden_dim = 128,
-            batch_size = 16
-        )
-        hparams2 = Namespace(**d)
-
-        # BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
-        # pretrained feature extractor - using our own trained Encoder
-        self.ae = BasicAE(hparams2)
+        self.ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
         self.frozen = True
         self.ae.freeze()
         self.ae.decoder = None
 
-        self.space_map_cnn = SpatialMappingCNN()
+        # calculate output dim = padded no of bbs * 8 coordinates
+        self.output_dim = self.hparams.max_bb * 8
 
-        self.box_merge = BoxesMergingCNN()
+        # MLP layers
+        self.fc1 = nn.Linear(self.ae.latent_dim, self.output_dim//2)
+        self.fc2 = nn.Linear(self.output_dim//2, self.output_dim)
 
-    def wide_stitch_six_images(self, x):
+    def wide_stitch_six_images(self, sample):
         # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
-        #x = torch.stack(sample, dim=0)
+        x = torch.stack(sample, dim=0)
 
         # reorder order of 6 images (in first dimension) to become 180 degree view
         x = x[:, [0, 1, 2, 5, 4, 3]]
@@ -65,82 +61,87 @@ class BBSpatialModel(LightningModule):
         # rearrange axes and reshape to wide format
         b, num_imgs, c, h, w = x.size()
         x = x.permute(0, 2, 3, 1, 4).reshape(b, c, h, -1)
-        #assert x.size(-1) == 6 * 306
         return x
 
-    def forward(self, x):
+    def pad_bb_coordinates(self, target):
+        # target is a tuple of len batch_size
 
+        # initialize padded output vector with dim [b, max_bb, 2, 4]
+        output = torch.zeros(self.hparams.batch_size, self.hparams.max_bb, 2, 4)
 
-        # spatial representation
-        spacial_rep = self.space_map_cnn(x)
-
-        # selfsupervised representation
-        x = self.wide_stitch_six_images(x)
-        ssr = self.ae.encoder(x, c3_only=True)
-
-        # combine two -> [b, 800, 800]
-        yhat = self.box_merge(ssr, spacial_rep)
-        yhat = yhat.squeeze(1)
-
-        return yhat
-
-    def bb_coord_to_map(self, target):
-        # target is tuple with len b
-        results = []
+        # loop over the items in the batch
         for i, sample in enumerate(target):
-            # tuple of len 2 -> [num_boxes, 2, 4]
-            sample = sample['bounding_box']
-            map = boxes_to_binary_map(sample)
-            results.append(map)
+            # dim is [num_bb, 2, 4]
+            flat_coords = sample['bounding_box']
 
-        results = torch.tensor(results)
-        return results
+            # get the num of bounding boxes in this image
+            num_bb = flat_coords.size(0)
+
+            # replace non-zero box coordinates in padded vector
+            output[i, 0:num_bb, ...] = flat_coords
+
+        # output has dim [b, max_bb, 2, 4]
+        return output
+
+    def forward(self, x):
+        # called with self(x)
+        x = self.wide_stitch_six_images(x)
+
+        representations = self.ae.encoder(x)
+
+        # now run through MLP
+        y = F.relu(self.fc1(representations))
+        y = self.fc2(y)
+
+        # reshape the predictions to be:
+        # [b, max_bb*2*4] -> [b, max_bb, 2, 4]
+        #y = y.reshape(y.size(0), self.hparams.max_bb, 2, 4)
+
+        return y
 
     def _run_step(self, batch, batch_idx, step_name):
         sample, target, road_image = batch
 
-        # change target from dict of bounding box coords --> [b, 800, 800]
-        target_bb_img = self.bb_coord_to_map(target)
-        target_bb_img = target_bb_img.type_as(sample[0])
+        # transform the target from bb coordinates into padded tensors
+        # (b) tuple of dicts -> [b, max_bb, 2, 4]
+        #target_bb = self.pad_bb_coordinates(target)
+        #target_bb = target_bb.type_as(sample[0])
+        target_bb = sketch_regions(target)
+        # forward pass to find predicted bb tensor
+        # -> [b, max_bb, 4, 2]
+        pred_bb = self(sample)
 
-        # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
-        sample = torch.stack(sample, dim=0)
-        sample = sample.type_as(sample[0])
-
-        # forward pass to find predicted roadmap
-        pred_bb_img = self(sample)
-
-        # every 10 epochs we look at inputs + predictions
+        # every few epochs we visualize inputs + predictions
         if batch_idx % self.hparams.output_img_freq == 0:
-            x0 = 1- sample[0]
-            target_bb_img0 = 1 - target_bb_img[0]
-            pred_bb_img0 = 1- pred_bb_img[0]
+            # x dim: [b, 3, 256, 1836]
+            x = self.wide_stitch_six_images(sample)
 
-            self._log_rm_images(x0, target_bb_img0, pred_bb_img0, step_name)
+            # take the first image in batch
+            # [b, max_bb, 2, 4] -> [max_bb, 2, 4]
+            target_bb0 = target_bb[0]
+            pred_bb0 = pred_bb[0]
 
-        # calculate mse loss between pixels
-        batch_size = target_bb_img.size(0)
-        target_bb_img = target_bb_img.view(batch_size, -1)
-        pred_bb_img = pred_bb_img.view(batch_size, -1)
-        loss = F.binary_cross_entropy(pred_bb_img, target_bb_img)
+            # have to reshape pred bb from [max_bb*2*4] -> [max_bb, 2, 4]
+            # target_bb0 = target_bb0.reshape(self.hparams.max_bb, 2, 4)
+            # pred_bb0 = pred_bb0.reshape(self.hparams.max_bb, 2, 4)
 
-        return loss, target_bb_img, pred_bb_img
+            # [100, 2, 4] -> matplotlib figure
+            pred_img = plot_all_boxes_new(pred_bb0)
+            target_img = plot_all_boxes_new(target_bb0)
 
-    def _log_rm_images(self, x, target, pred, step_name, limit=1):
+            log_bb_images(self, x, target_img, pred_img, step_name)
 
-        input_images = torchvision.utils.make_grid(x, normalize=True)
-        target = torchvision.utils.make_grid(target, normalize=True)
-        pred = torchvision.utils.make_grid(pred, normalize=True)
-
-        self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
-        self.logger.experiment.add_image(f'{step_name}_target_bbs', target, self.trainer.global_step)
-        self.logger.experiment.add_image(f'{step_name}_pred_bbs', pred, self.trainer.global_step)
+        # calculate the MSE loss between coordinates
+        # note: F.mse_loss calculates element wise MSE loss so I don't have to flatten tensors
+        loss = F.mse_loss(target_bb, pred_bb)
+        #loss = F.bce_loss(pred_bb,target_bb) #this would also work :-)
+        return loss, target_bb, pred_bb
 
     def training_step(self, batch, batch_idx):
 
-        if self.current_epoch >= 30 and self.frozen:
-            self.frozen=False
-            self.ae.unfreeze()
+        #if self.current_epoch >= 30 and self.frozen:
+        #    self.frozen=False
+        #    self.ae.unfreeze()
 
         train_loss, _, _ = self._run_step(batch, batch_idx, step_name='train')
         train_tensorboard_logs = {'train_loss': train_loss}
@@ -163,11 +164,7 @@ class BBSpatialModel(LightningModule):
         image_folder = self.hparams.link
         annotation_csv = self.hparams.link + '/annotation.csv'
 
-        transform = transforms.Compose(
-            [
-                torchvision.transforms.ToTensor()
-            ]
-        )
+        transform = torchvision.transforms.ToTensor()
 
         labeled_dataset = LabeledDataset(image_folder=image_folder,
                                          annotation_file=annotation_csv,
@@ -186,6 +183,7 @@ class BBSpatialModel(LightningModule):
         loader = DataLoader(self.trainset,
                             batch_size=self.hparams.batch_size,
                             shuffle=True,
+                            drop_last=True,
                             num_workers=4,
                             collate_fn=collate_fn)
         return loader
@@ -195,6 +193,7 @@ class BBSpatialModel(LightningModule):
         loader = DataLoader(self.validset,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,
+                            drop_last=True,
                             num_workers=4,
                             collate_fn=collate_fn)
         return loader
@@ -206,20 +205,23 @@ class BBSpatialModel(LightningModule):
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
         parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
-        parser.add_argument('--batch_size', type=int, default=32)
+        parser.add_argument('--batch_size', type=int, default=16)
+        parser.add_argument('--max_bb', type=int, default=100)
+
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         parser.add_argument('--pretrained_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=1000)
-        return parser
 
+        return parser
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    parser = BBSpatialModel.add_model_specific_args(parser)
+    parser = Boxes.add_model_specific_args(parser)
     args = parser.parse_args()
 
-    model = BBSpatialModel(args)
+    model = Boxes(args)
     trainer = Trainer.from_argparse_args(args)
     trainer.fit(model)
+
