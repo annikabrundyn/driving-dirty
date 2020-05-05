@@ -1,14 +1,10 @@
 import random
 import numpy as np
 import torch
-random.seed(0)
-np.random.seed(0)
-torch.manual_seed(0)
 
 from argparse import ArgumentParser, Namespace
 
 import torchvision
-from  torchvision  import transforms
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -16,15 +12,14 @@ from torch.utils.data import DataLoader
 from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
-from src.utils import convert_map_to_lane_map
 from src.utils.data_helper import LabeledDataset
-from src.utils.helper import collate_fn, boxes_to_binary_map
-
-
+from src.utils.helper import collate_fn, boxes_to_binary_map, compute_ts_road_map
 from src.autoencoder.autoencoder import BasicAE
 from src.bounding_box_model.spatial_bb.components import SpatialMappingCNN, BoxesMergingCNN
 
-from src.utils.helper import compute_ts_road_map
+random.seed(20200505)
+np.random.seed(20200505)
+torch.manual_seed(20200505)
 
 
 class BBSpatialModel(LightningModule):
@@ -162,28 +157,33 @@ class BBSpatialModel(LightningModule):
     def prepare_data(self):
         image_folder = self.hparams.link
         annotation_csv = self.hparams.link + '/annotation.csv'
+        labeled_scene_index = np.arange(106, 134)
+        trainset_size = round(0.8 * len(labeled_scene_index))
 
-        transform = transforms.Compose(
-            [
-                torchvision.transforms.ToTensor()
-            ]
-        )
+        # split into train / validation sets at the scene index level
+        # before I did this at the sample level --> this will cause leakage (!!)
+        np.random.shuffle(labeled_scene_index)
+        train_set_index = labeled_scene_index[:trainset_size]
+        valid_set_index = labeled_scene_index[trainset_size:]
 
-        labeled_dataset = LabeledDataset(image_folder=image_folder,
-                                         annotation_file=annotation_csv,
-                                         scene_index=np.arange(106, 134),
-                                         transform=transform,
-                                         extra_info=False)
+        transform = torchvision.transforms.ToTensor()
 
-        trainset_size = round(0.8 * len(labeled_dataset))
-        validset_size = round(0.2 * len(labeled_dataset))
+        # training set
+        self.labeled_trainset = LabeledDataset(image_folder=image_folder,
+                                               annotation_file=annotation_csv,
+                                               scene_index=train_set_index,
+                                               transform=transform,
+                                               extra_info=False)
 
-        # split train + valid at the sample level (ie 6 image collections) not scene/video level
-        self.trainset, self.validset = torch.utils.data.random_split(labeled_dataset,
-                                                                     lengths = [trainset_size, validset_size])
+        # validation set
+        self.labeled_validset = LabeledDataset(image_folder=image_folder,
+                                               annotation_file=annotation_csv,
+                                               scene_index=valid_set_index,
+                                               transform=transform,
+                                               extra_info=False)
 
     def train_dataloader(self):
-        loader = DataLoader(self.trainset,
+        loader = DataLoader(self.labeled_trainset,
                             batch_size=self.hparams.batch_size,
                             shuffle=True,
                             num_workers=4,
@@ -192,7 +192,7 @@ class BBSpatialModel(LightningModule):
 
     def val_dataloader(self):
         # don't shuffle validation batches
-        loader = DataLoader(self.validset,
+        loader = DataLoader(self.labeled_validset,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,
                             num_workers=4,

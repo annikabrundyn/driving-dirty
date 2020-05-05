@@ -2,11 +2,9 @@
 This file runs the main training/val loop, etc... using Lightning Trainer
 """
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelCheckpoint
-from argparse import ArgumentParser
 from src.autoencoder.autoencoder import BasicAE
 from src.roadmap_model.roadmap_pretrain_ae import RoadMap
-from src.bounding_box_model.bb_MLP import Boxes
+from src.bounding_box_model.bb_coord_reg.bb_MLP import Boxes
 from src.bounding_box_model.spatial_bb.spatial_model import BBSpatialModel
 from test_tube import HyperOptArgumentParser, SlurmCluster
 import os, sys
