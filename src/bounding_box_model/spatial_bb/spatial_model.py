@@ -111,11 +111,10 @@ class BBSpatialModel(LightningModule):
         pred_bb_img = self(sample)
 
         # every 10 epochs we look at inputs + predictions
-        # if True:
         if batch_idx % self.hparams.output_img_freq == 0:
-            x0 = sample[0]
-            target_bb_img0 = target_bb_img[0]
-            pred_bb_img0 = pred_bb_img[0]
+            x0 = 1- sample[0]
+            target_bb_img0 = 1 - target_bb_img[0]
+            pred_bb_img0 = 1- pred_bb_img[0]
 
             self._log_rm_images(x0, target_bb_img0, pred_bb_img0, step_name)
 
