@@ -69,8 +69,7 @@ class BBSpatialModel(LightningModule):
         return x
 
     def forward(self, x):
-        # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
-        x = torch.stack(x, dim=0)
+
 
         # spatial representation
         spacial_rep = self.space_map_cnn(x)
@@ -103,6 +102,10 @@ class BBSpatialModel(LightningModule):
         # change target from dict of bounding box coords --> [b, 800, 800]
         target_bb_img = self.bb_coord_to_map(target)
         target_bb_img = target_bb_img.type_as(sample[0])
+
+        # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
+        sample = torch.stack(sample, dim=0)
+        sample = sample.type_as(sample[0])
 
         # forward pass to find predicted roadmap
         pred_bb_img = self(sample)
