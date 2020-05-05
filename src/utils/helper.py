@@ -9,76 +9,35 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Polygon
 
 
-def log_rm_images(self, x, target_rm, pred_rm, step_name, limit=1):
+def log_bb_images(self, x, target_bb_plt, pred_bb_plt, step_name, limit=1):
     # log 6 images stitched wide, target/true roadmap and predicted roadmap
     # take first image in the batch
     x = x[:limit]
-    target_rm = target_rm[:limit]
-    pred_rm = pred_rm[:limit].round()
-
     input_images = torchvision.utils.make_grid(x)
-    target_roadmaps = torchvision.utils.make_grid(target_rm)
-    pred_roadmaps = torchvision.utils.make_grid(pred_rm)
-
     self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
-    self.logger.experiment.add_image(f'{step_name}_target_roadmaps', target_roadmaps,
-                                     self.trainer.global_step)
-    self.logger.experiment.add_image(f'{step_name}_pred_roadmaps', pred_roadmaps, self.trainer.global_step)
+
+    # for outputting the matplotlib figures
+    self.logger.experiment.add_figure(f'{step_name}_target_bbs', target_bb_plt, self.trainer.global_step)
+    self.logger.experiment.add_figure(f'{step_name}_pred_bbs', pred_bb_plt, self.trainer.global_step)
 
 
-def plot_image(target):
-    # (100, 2, 4)
+def draw_one_box_new(corners, color):
+    point_squence = torch.stack([corners[:, 0], corners[:, 1], corners[:, 3], corners[:, 2], corners[:, 0]])
+    plt.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
+
+def plot_all_boxes_new(target):
+    # expected input has shape [100, 2, 4]
 
     target = target.detach()
-    fig, ax = plt.subplots()
-    road_image_ex = torch.zeros(800, 800)
-    _ = plt.imshow(road_image_ex, cmap='binary')
-
+    fig = plt.figure()
+    road_image_blank = torch.zeros(800, 800)
+    plt.imshow(road_image_blank, cmap='binary')
+    #plt.axis('off')
     for i, bb in enumerate(target):
-        # bb = (2, 4)
-        # You can check the implementation of the draw box to understand how it works
-        draw_boxs(ax, bb.cpu().float(), color="black")
+        # bb = [2, 4]
+        draw_one_box_new(bb.cpu().float(), color="black")
+    return fig
 
-    img_data = fig2data(fig)
-    img_data = img_data[120: -125, 135:-109]
-
-    img_data = torch.tensor(img_data).type_as(target)
-
-    # (755, 756, 4) -> (1, 755, 756)
-    img_data = img_data[:, :, 0].unsqueeze(0)
-
-    # (c, h, w) -> (b, c, h, w)
-    img_data = img_data.unsqueeze(0)
-
-    return img_data
-
-
-def fig2data(fig):
-    """
-    @brief Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it
-    @param fig a matplotlib figure
-    @return a numpy 3D array of RGBA values
-    """
-    # draw the renderer
-    fig.canvas.draw()
-
-    # Get the RGBA buffer from the figure
-    w, h = fig.canvas.get_width_height()
-    buf = np.fromstring(fig.canvas.tostring_argb(), dtype=np.uint8)
-    buf.shape = (w, h, 4)
-
-    # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
-    buf = np.roll(buf, 3, axis=2)
-    return buf
-
-
-def draw_boxs(ax, corners, color):
-    point_squence = torch.stack([corners[:, 0], corners[:, 1], corners[:, 3], corners[:, 2], corners[:, 0]])
-
-    # the corners are in meter and time 10 will convert them in pixels
-    # Add 400, since the center of the image is at pixel (400, 400)
-    # The negative sign is because the y axis is reversed for matplotlib
-    plt.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
 
 def convert_map_to_lane_map(ego_map, binary_lane):
     mask = (ego_map[0,:,:] == ego_map[1,:,:]) * (ego_map[1,:,:] == ego_map[2,:,:]) + (ego_map[0,:,:] == 250 / 255)
@@ -161,4 +120,61 @@ def compute_iou(box1, box2):
     b = Polygon(torch.t(box2)).convex_hull
     
     return a.intersection(b).area / a.union(b).area
+
+
+
+##### THESE ARE NOT NEEDED
+def plot_image(target):
+    # expected input has shape(100, 2, 4)
+
+    target = target.detach()
+    fig, ax = plt.subplots()
+    road_image_ex = torch.zeros(800, 800)
+    _ = plt.imshow(road_image_ex, cmap='binary')
+
+    for i, bb in enumerate(target):
+        # bb = (2, 4)
+        # You can check the implementation of the draw box to understand how it works
+        draw_boxs(ax, bb.cpu().float(), color="black")
+
+    img_data = fig2data(fig)
+    img_data = img_data[120: -125, 135:-109]
+
+    img_data = torch.tensor(img_data).type_as(target)
+
+    # (755, 756, 4) -> (1, 755, 756)
+    img_data = img_data[:, :, 0].unsqueeze(0)
+
+    # (c, h, w) -> (b, c, h, w)
+    img_data = img_data.unsqueeze(0)
+
+    return img_data
+
+
+def fig2data(fig):
+    """
+    @brief Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it
+    @param fig a matplotlib figure
+    @return a numpy 3D array of RGBA values
+    """
+    # draw the renderer
+    fig.canvas.draw()
+
+    # Get the RGBA buffer from the figure
+    w, h = fig.canvas.get_width_height()
+    buf = np.fromstring(fig.canvas.tostring_argb(), dtype=np.uint8)
+    buf.shape = (w, h, 4)
+
+    # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
+    buf = np.roll(buf, 3, axis=2)
+    return buf
+
+
+def draw_boxs(ax, corners, color):
+    point_squence = torch.stack([corners[:, 0], corners[:, 1], corners[:, 3], corners[:, 2], corners[:, 0]])
+
+    # the corners are in meter and time 10 will convert them in pixels
+    # Add 400, since the center of the image is at pixel (400, 400)
+    # The negative sign is because the y axis is reversed for matplotlib
+    plt.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
 
