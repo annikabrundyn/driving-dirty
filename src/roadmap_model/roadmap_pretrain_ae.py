@@ -21,6 +21,9 @@ from src.utils.helper import collate_fn
 from src.autoencoder.autoencoder import BasicAE
 from src.utils.helper import compute_ts_road_map
 
+random.seed(20200505)
+np.random.seed(20200505)
+torch.manual_seed(20200505)
 
 class RoadMap(LightningModule):
 
@@ -151,24 +154,33 @@ class RoadMap(LightningModule):
     def prepare_data(self):
         image_folder = self.hparams.link
         annotation_csv = self.hparams.link + '/annotation.csv'
+        labeled_scene_index = np.arange(106, 134)
+        trainset_size = round(0.8 * len(labeled_scene_index))
+
+        # split into train / validation sets at the scene index level
+        # before I did this at the sample level --> this will cause leakage (!!)
+        np.random.shuffle(labeled_scene_index)
+        train_set_index = labeled_scene_index[:trainset_size]
+        valid_set_index = labeled_scene_index[trainset_size:]
 
         transform = torchvision.transforms.ToTensor()
 
-        labeled_dataset = LabeledDataset(image_folder=image_folder,
-                                         annotation_file=annotation_csv,
-                                         scene_index=np.arange(106, 134),
-                                         transform=transform,
-                                         extra_info=False)
+        # training set
+        self.labeled_trainset = LabeledDataset(image_folder=image_folder,
+                                               annotation_file=annotation_csv,
+                                               scene_index=train_set_index,
+                                               transform=transform,
+                                               extra_info=False)
 
-        trainset_size = round(0.8 * len(labeled_dataset))
-        validset_size = round(0.2 * len(labeled_dataset))
-
-        # split train + valid at the sample level (ie 6 image collections) not scene/video level
-        self.trainset, self.validset = torch.utils.data.random_split(labeled_dataset,
-                                                                     lengths = [trainset_size, validset_size])
+        # validation set
+        self.labeled_validset = LabeledDataset(image_folder=image_folder,
+                                               annotation_file=annotation_csv,
+                                               scene_index=valid_set_index,
+                                               transform=transform,
+                                               extra_info=False)
 
     def train_dataloader(self):
-        loader = DataLoader(self.trainset,
+        loader = DataLoader(self.labeled_trainset,
                             batch_size=self.hparams.batch_size,
                             shuffle=True,
                             num_workers=4,
@@ -177,7 +189,7 @@ class RoadMap(LightningModule):
 
     def val_dataloader(self):
         # don't shuffle validation batches
-        loader = DataLoader(self.validset,
+        loader = DataLoader(self.labeled_validset,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,
                             num_workers=4,
