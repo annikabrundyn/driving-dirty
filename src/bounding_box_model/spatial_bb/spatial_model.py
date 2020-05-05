@@ -27,7 +27,7 @@ from src.bounding_box_model.spatial_bb.components import SpatialMappingCNN, Boxe
 from src.utils.helper import compute_ts_road_map
 
 
-class RoadMap(LightningModule):
+class BBSpatialModel(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
@@ -212,9 +212,9 @@ class RoadMap(LightningModule):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    parser = RoadMap.add_model_specific_args(parser)
+    parser = BBSpatialModel.add_model_specific_args(parser)
     args = parser.parse_args()
 
-    model = RoadMap(args)
+    model = BBSpatialModel(args)
     trainer = Trainer.from_argparse_args(args)
     trainer.fit(model)
