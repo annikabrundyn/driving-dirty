@@ -47,7 +47,7 @@ class SpatialMappingCNN(nn.Module):
         b = F.relu(self.b_conv(b))
 
         f = x[:, 1, ...]
-        f = torch.rot90(f, 1, [3, 2])
+        f = torch.rot90(f.half(), 1, [3, 2])
         #f = f.type_as(x[0])
         f = F.relu(self.f_conv(f))
 
