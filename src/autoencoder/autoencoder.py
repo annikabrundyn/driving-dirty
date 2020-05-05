@@ -8,10 +8,14 @@ from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
 import numpy as np
+import random
 
 from src.autoencoder.components import Encoder, Decoder
 from src.utils.data_helper import UnlabeledDataset
 
+random.seed(20200505)
+np.random.seed(20200505)
+torch.manual_seed(20200505)
 
 class BasicAE(LightningModule):
     def __init__(self, hparams=None):
@@ -117,30 +121,38 @@ class BasicAE(LightningModule):
 
     def prepare_data(self):
         image_folder = self.hparams.link
+        unlabeled_scene_index = np.arange(106)
+        trainset_size = round(0.8 * len(unlabeled_scene_index))
+
+        # split into train / validation sets at the scene index level
+        # before I did this at the sample level --> this will cause leakage (!!)
+        np.random.shuffle(unlabeled_scene_index)
+        train_set_index = unlabeled_scene_index[:trainset_size]
+        valid_set_index = unlabeled_scene_index[trainset_size:]
 
         transform = torchvision.transforms.ToTensor()
 
-        unlabeled_dataset = UnlabeledDataset(image_folder=image_folder,
-                                             scene_index=np.arange(106),
-                                             first_dim='sample',
-                                             transform=transform)
+        # training set
+        self.unlabeled_trainset = UnlabeledDataset(image_folder=image_folder,
+                                                   scene_index=train_set_index,
+                                                   first_dim='sample',
+                                                   transform=transform)
 
-        trainset_size = round(0.8 * len(unlabeled_dataset))
-        validset_size = round(0.2 * len(unlabeled_dataset))
-
-        self.trainset, self.validset = torch.utils.data.random_split(unlabeled_dataset,
-                                                                      lengths = [trainset_size,
-                                                                                 validset_size])
+        # validation set
+        self.unlabeled_validset = UnlabeledDataset(image_folder=image_folder,
+                                                   scene_index=valid_set_index,
+                                                   first_dim='sample',
+                                                   transform=transform)
 
     def train_dataloader(self):
-        loader = torch.utils.data.DataLoader(self.trainset,
+        loader = torch.utils.data.DataLoader(self.unlabeled_trainset,
                                              batch_size=self.batch_size,
                                              shuffle=True,
                                              num_workers=4)
         return loader
 
     def val_dataloader(self):
-        loader = torch.utils.data.DataLoader(self.trainset,
+        loader = torch.utils.data.DataLoader(self.unlabeled_validset,
                                              batch_size=self.batch_size,
                                              shuffle=False,
                                              num_workers=4)
