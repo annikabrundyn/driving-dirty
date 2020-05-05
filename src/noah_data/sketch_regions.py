@@ -57,7 +57,7 @@ def sketch_regions(target):
                 grid_[xi,yi] = 1.
             x, y = torch.where(grid_ > 0)
             j = 0
-            while j < 128:
+            while j < 256:
                 a,b = random.sample(range(x.min(),x.max()),2)
                 c , d = random.sample(range(y.min(),y.max()),2)
                 rr, cc = line(a, c, b-1, d-1) #
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     image_folder = '/Users/noahkasmanoff/Desktop/Deep_Learning/car/dat/data'
     annotation_file = image_folder + '/annotation.csv'
-    batch_size = 4
+    batch_size = 16
 
 
     labeled_scene_index = np.arange(106, 134)
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     extra_info=True
     ) 
 
-    trainloader = torch.utils.data.DataLoader(labeled_trainset, batch_size=4,shuffle=True, num_workers=2, collate_fn=collate_fn)
+    trainloader = torch.utils.data.DataLoader(labeled_trainset, batch_size=batch_size,shuffle=True, num_workers=2, collate_fn=collate_fn)
     sample, target, road_image, extra = iter(trainloader).next()
 
     print("Now running a test ...")
