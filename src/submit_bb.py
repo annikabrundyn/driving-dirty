@@ -12,7 +12,7 @@ import os, sys
 MODEL_NAMES = {
     'basic_ae': BasicAE,
     'roadmap': RoadMap,
-    'bb': Boxes,
+    'bb_reg': Boxes,
     'spatial_bb': BBSpatialModel,
 }
 

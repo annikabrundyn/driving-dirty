@@ -117,7 +117,7 @@ class BasicAE(LightningModule):
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.0005)
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
 
     def prepare_data(self):
         image_folder = self.hparams.link
@@ -163,20 +163,22 @@ class BasicAE(LightningModule):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
         parser.opt_list('--hidden_dim', type=int, default=128, options=[128, 256, 512], tunable=True,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
-        parser.opt_list('--latent_dim', type=int, default=128, options=[64, 128, 256, 512], tunable=True,
+        parser.opt_list('--latent_dim', type=int, default=128, options=[64, 128, 256], tunable=True,
                             help='dimension of latent variables z')
+        parser.opt_list('--learning_rate', type=float, default=0.005, options=[0.005, 0.001, 0.0001], tunable=True,
+                        help='dimension of latent variables z')
+        parser.opt_list('--batch_size', type=int, default=16, options=[32, 24, 16, 10], tunable=True)
 
+        # fixed parameters
         parser.add_argument('--input_width', type=int, default=306*6,
                             help='input image width - 28 for MNIST (must be even)')
         parser.add_argument('--input_height', type=int, default=256,
                             help='input image height - 28 for MNIST (must be even)')
         parser.add_argument('--output_width', type=int, default=306)
         parser.add_argument('--output_height', type=int, default=256)
-
-        parser.opt_list('--batch_size', type=int, default=16, options=[64, 32, 24, 16, 10, 8], tunable=False)
         parser.add_argument('--in_channels', type=int, default=3)
-
-        parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
+        parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
+        #parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         return parser
 
 
