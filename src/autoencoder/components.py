@@ -35,10 +35,12 @@ class Encoder(torch.nn.Module):
         x = F.max_pool1d(x, kernel_size=pooling_size)
         return x.size(-1)
 
-    def forward(self, x):
+    def forward(self, x, c3_only=False):
         x = F.relu(self.c1(x))
         x = F.relu(self.c2(x))
         x = F.relu(self.c3(x))
+        if c3_only:
+            return x
         x = x.view(x.size(0), -1).unsqueeze(1)
         x = F.max_pool1d(x, kernel_size=self.pooling_size).squeeze(1)
         x = self.fc1(x)
