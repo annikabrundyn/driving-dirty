@@ -108,7 +108,7 @@ class BBSpatialModel(LightningModule):
         sample = sample.type_as(sample[0])
 
         # forward pass to find predicted roadmap
-        pred_bb_img = self(sample)
+        pred_bb_img = self.forward(sample)
 
         # every 10 epochs we look at inputs + predictions
         if True:
