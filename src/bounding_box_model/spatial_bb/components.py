@@ -28,6 +28,7 @@ class SpatialMappingCNN(nn.Module):
     def forward(self, x):
         # (b, 6, 3, 256, 306) -> (b, 32, 256, 256)
 
+        x = x.half()
         # ---------------
         # DO NOT ROTATE THESE
         # ---------------
