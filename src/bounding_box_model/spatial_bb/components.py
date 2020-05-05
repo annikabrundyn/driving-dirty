@@ -41,7 +41,7 @@ class SpatialMappingCNN(nn.Module):
         # ROTATE
         # ---------------
         b = x[:, 4, ...]
-        b = b.flip(1).transpose(1, 0)
+        b = b.flip(1).transpose(2, 1)
         b = F.relu(self.b_conv(b))
 
         f = x[:, 1, ...]
