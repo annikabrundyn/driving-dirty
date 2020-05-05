@@ -41,7 +41,8 @@ class SpatialMappingCNN(nn.Module):
         # ROTATE
         # ---------------
         b = x[:, 4, ...]
-        import pdb; pdb.set_trace()
+        b = b.float()
+        #import pdb; pdb.set_trace()
         b = torch.rot90(b, 1, [2, 3])
         #b = b.type_as(x[0])
         b = F.relu(self.b_conv(b))
