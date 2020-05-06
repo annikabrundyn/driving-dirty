@@ -131,7 +131,7 @@ class BBSpatialModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        if self.current_epoch >= 30 and self.frozen:
+        if self.current_epoch >= 3 and self.frozen:
             self.frozen=False
             self.ae.unfreeze()
 
