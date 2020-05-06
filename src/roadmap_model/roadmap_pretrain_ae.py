@@ -93,12 +93,16 @@ class RoadMap(LightningModule):
             x = self.wide_stitch_six_images(sample)
             self._log_rm_images(x, target_rm, pred_rm, step_name)
 
-        # flatten roadmap tensors, convert target rm from True/False to 1/0
-        #target_rm = target_rm.view(target_rm.size(0), -1)
-        #pred_rm = pred_rm.view(pred_rm.size(0), -1)
+        # calculate loss between pixels
+        if self.hparams.loss_fun == "mse":
+            loss = F.mse_loss(target_rm, pred_rm)
 
-        # calculate mse loss between pixels
-        loss = F.mse_loss(target_rm, pred_rm)
+        elif self.hparams.loss_fun == "bce":
+            # flatten and calculate binary cross entropy
+            batch_size = target_rm.size(0)
+            target_rm_flat = target_rm.view(batch_size, -1)
+            pred_rm_flat = pred_rm.view(batch_size, -1)
+            loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat)
 
         return loss, target_rm, pred_rm
 
@@ -200,7 +204,7 @@ class RoadMap(LightningModule):
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
         parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
-        #parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=False)
+        parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=True)
 
         parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
