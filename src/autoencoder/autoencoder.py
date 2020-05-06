@@ -21,7 +21,7 @@ class BasicAE(LightningModule):
     def __init__(self, hparams=None):
         super().__init__()
         # attach hparams to log hparams to the loggers (like tensorboard)
-        self.__check_hparams(hparams)
+        #self.__check_hparams(hparams)
         self.hparams = hparams
 
         self.encoder = self.init_encoder(self.hidden_dim, self.latent_dim,
