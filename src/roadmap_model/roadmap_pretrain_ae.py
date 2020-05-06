@@ -72,7 +72,8 @@ class RoadMap(LightningModule):
         representations = self.ae.encoder(x)
 
         # now run through MLP
-        y = torch.sigmoid(self.fc1(representations))
+        y = nn.Sigmoid(self.fc1(representations))
+        #y = torch.sigmoid(self.fc1(representations))
 
         # reshape prediction to be tensor with b x 800 x 800
         y = y.reshape(y.size(0), 800, 800)
