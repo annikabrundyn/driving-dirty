@@ -64,8 +64,6 @@ class BBSpatialModel(LightningModule):
         return x
 
     def forward(self, x):
-
-
         # spatial representation
         spacial_rep = self.space_map_cnn(x)
 
@@ -107,7 +105,7 @@ class BBSpatialModel(LightningModule):
 
         # every 10 epochs we look at inputs + predictions
         if batch_idx % self.hparams.output_img_freq == 0:
-            x0 = 1- sample[0]
+            x0 = sample[0]
             target_bb_img0 = 1 - target_bb_img[0]
             pred_bb_img0 = 1- pred_bb_img[0]
 
@@ -205,7 +203,7 @@ class BBSpatialModel(LightningModule):
 
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
-        parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+        parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
         parser.add_argument('--batch_size', type=int, default=32)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
