@@ -80,14 +80,14 @@ if __name__ == '__main__':
     parser = MODEL_CLASS.add_model_specific_args(parser)
     parser.add_argument('--nodes', type=int, default=1)
     parser.add_argument('--conda_env', type=str, default='driving-dirty')
-    parser.add_argument('--on_cluster', default=False, action='store_true')
+    parser.add_argument('--on_cluster', default=True, action='store_true')
     parser.add_argument('-n', '--tt_name', default='space_bb_pretrain')
     parser.add_argument('-d', '--tt_description', default='pretrained ae for feature extraction')
     parser.add_argument('--logs_save_path', default='/scratch/ab8690/logs')
     parser.add_argument('--single_run', dest='single_run', action='store_true')
     parser.add_argument('--nb_hopt_trials', default=8, type=int)
-    parser.add_argument('--gpus', default=1, type=int)
-    parser.add_argument('--precision', default=16, type=int)
+    #parser.add_argument('--gpus', default=1, type=int)
+    #parser.add_argument('--precision', default=16, type=int)
 
     # parse params
     hparams = parser.parse_args()
