@@ -32,16 +32,16 @@ class RoadMap(LightningModule):
 
         # TODO: add pretrained weight path
         # TODO: remove this to train models again
-        d = dict(
-            latent_dim = 64,
-            hidden_dim = 128,
-            batch_size = 16
-        )
-        hparams2 = Namespace(**d)
+        #d = dict(
+        #    latent_dim = 64,
+        #    hidden_dim = 128,
+        #    batch_size = 16
+        #)
+        #hparams2 = Namespace(**d)
 
-        # BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
         # pretrained feature extractor - using our own trained Encoder
-        self.ae = BasicAE(hparams2)
+        self.ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
+        #self.ae = BasicAE(hparams2)
         self.frozen = True
         self.ae.freeze()
         self.ae.decoder = None
@@ -199,14 +199,14 @@ class RoadMap(LightningModule):
 
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
-        parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
-        parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=False)
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+        #parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=False)
 
         parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
-        parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
-        parser.add_argument('--pretrained_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
-        parser.add_argument('--output_img_freq', type=int, default=1000)
+        parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
+        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/dd_pretrain_ae/lightning_logs/version_9234267/checkpoints/epoch=42.ckpt')
+        parser.add_argument('--output_img_freq', type=int, default=500)
         return parser
 
 
