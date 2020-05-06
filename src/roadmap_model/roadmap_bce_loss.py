@@ -138,18 +138,19 @@ class RoadMap(LightningModule):
         val_loss, target_rm, pred_rm = self._run_step(batch, batch_idx, step_name='valid')
 
         # calculate threat score
-        #val_ts = compute_ts_road_map(target_rm, pred_rm)
+        val_ts = compute_ts_road_map(target_rm, pred_rm)
         val_ts_rounded = compute_ts_road_map(target_rm, pred_rm.round())
         #val_ts = torch.tensor(val_ts).type_as(val_loss)
 
-        return {'val_loss': val_loss, 'val_ts_rounded': val_ts_rounded}
+        return {'val_loss': val_loss, 'val_ts_rounded': val_ts_rounded, 'val_ts': val_ts}
 
     def validation_epoch_end(self, outputs):
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        #avg_val_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+        avg_val_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
         avg_val_ts_rounded = torch.stack([x['val_ts_rounded'] for x in outputs]).mean()
         val_tensorboard_logs = {'avg_val_loss': avg_val_loss,
-                                'avg_val_ts_rounded': avg_val_ts_rounded}
+                                'avg_val_ts_rounded': avg_val_ts_rounded,
+                                'avg_val_ts': avg_val_ts}
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
