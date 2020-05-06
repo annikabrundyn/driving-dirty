@@ -94,10 +94,10 @@ class RoadMap(LightningModule):
             self._log_rm_images(x, target_rm, pred_rm, step_name)
 
         # calculate loss between pixels
-        if self.hparams.loss_fun == "mse":
+        if self.hparams.loss_fn == "mse":
             loss = F.mse_loss(target_rm, pred_rm)
 
-        elif self.hparams.loss_fun == "bce":
+        elif self.hparams.loss_fn == "bce":
             # flatten and calculate binary cross entropy
             batch_size = target_rm.size(0)
             target_rm_flat = target_rm.view(batch_size, -1)
