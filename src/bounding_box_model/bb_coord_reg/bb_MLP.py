@@ -135,7 +135,7 @@ class Boxes(LightningModule):
         return loss, target_bb, pred_bb
 
     def training_step(self, batch, batch_idx):
-        if self.current_epoch >= 30 and self.frozen:
+        if self.current_epoch >= self.hparams.unfreeze_epoch_no and self.frozen:
             self.frozen=False
             self.ae.unfreeze()
         train_loss, _, _ = self._run_step(batch, batch_idx, step_name='train')
@@ -213,6 +213,7 @@ class Boxes(LightningModule):
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/dd_pretrain_ae/lightning_logs/version_9234267/checkpoints/epoch=42.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=500)
+        parser.add_argument('--unfreeze_epoch_no', type=int, default=30)
 
         return parser
 
