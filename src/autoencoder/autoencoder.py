@@ -29,19 +29,6 @@ class BasicAE(LightningModule):
         self.decoder = self.init_decoder(self.hidden_dim, self.latent_dim,
                                          self.in_channels, self.output_height, self.output_width)
 
-    def __check_hparams(self, hparams):
-        self.hidden_dim = hparams.hidden_dim if hasattr(hparams, 'hidden_dim') else 128
-        self.latent_dim = hparams.latent_dim if hasattr(hparams, 'latent_dim') else 128
-
-        self.input_width = hparams.input_width if hasattr(hparams, 'input_width') else 306*6
-        self.input_height = hparams.input_height if hasattr(hparams, 'input_height') else 256
-
-        self.output_width = hparams.output_width if hasattr(hparams, 'output_width') else 306
-        self.output_height = hparams.output_height if hasattr(hparams, 'output_height') else 256
-
-        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 24
-        self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
-
     def init_encoder(self, hidden_dim, latent_dim, in_channels, input_height, input_width):
         encoder = Encoder(hidden_dim, latent_dim, in_channels, input_height, input_width)
         return encoder
@@ -51,6 +38,7 @@ class BasicAE(LightningModule):
         return decoder
 
     def six_to_one_task(self, x):
+        import pdb; pdb.set_trace()
         # reorder and stitch images together in wide format
         x = x[:, [0, 1, 2, 5, 4, 3]]
         b, num_imgs, c, h, w = x.size()
@@ -84,7 +72,7 @@ class BasicAE(LightningModule):
         # Decode - y_hat has same dim as true y
         y_hat = self(z)
 
-        if batch_idx % 1000 == 0:
+        if batch_idx % self.hparams.output_img_freq == 0:
             self._log_images(y, y_hat, step_name)
 
         # consider replacing this reconstruction loss with something else
@@ -177,6 +165,7 @@ class BasicAE(LightningModule):
         parser.add_argument('--in_channels', type=int, default=3)
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         #parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
+        parser.add_argument('--output_img_freq', type=int, default=1000)
         return parser
 
 
