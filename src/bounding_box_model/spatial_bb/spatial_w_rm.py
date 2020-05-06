@@ -65,6 +65,7 @@ class BBSpatialRoadMap(LightningModule):
 
     def forward(self, x, rm):
         # spatial representation
+        import pdb; pdb.set_trace()
         spacial_rep = self.space_map_cnn(x)
 
         # selfsupervised representation
@@ -72,7 +73,7 @@ class BBSpatialRoadMap(LightningModule):
         ssr = self.ae.encoder(x, c3_only=True)
 
         # combine two -> [b, 800, 800]
-        yhat = self.box_merge(ssr, spacial_rep)
+        yhat = self.box_merge(ssr, spacial_rep, rm)
         yhat = yhat.squeeze(1)
 
         return yhat

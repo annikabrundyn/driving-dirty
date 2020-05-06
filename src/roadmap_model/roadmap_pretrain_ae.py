@@ -124,6 +124,8 @@ class RoadMap(LightningModule):
         self.logger.experiment.add_image(f'{step_name}_target_roadmaps', target_roadmaps, self.trainer.global_step)
         self.logger.experiment.add_image(f'{step_name}_pred_roadmaps', pred_roadmaps, self.trainer.global_step)
 
+    #def on_epoch_start(self) -> None:
+
     def training_step(self, batch, batch_idx):
 
         if self.current_epoch >= 30 and self.frozen:
