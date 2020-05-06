@@ -161,19 +161,17 @@ class BasicAE(LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
-        parser.opt_list('--hidden_dim', type=int, default=128, options=[128, 256, 512], tunable=True,
+        parser.opt_list('--hidden_dim', type=int, default=128, options=[128, 256], tunable=False,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
-        parser.opt_list('--latent_dim', type=int, default=128, options=[64, 128, 256], tunable=True,
+        parser.opt_list('--latent_dim', type=int, default=128, options=[64, 128], tunable=True,
                             help='dimension of latent variables z')
-        parser.opt_list('--learning_rate', type=float, default=0.005, options=[0.005, 0.001, 0.0001], tunable=True,
-                        help='dimension of latent variables z')
-        parser.opt_list('--batch_size', type=int, default=16, options=[32, 24, 16, 10], tunable=True)
+        parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+
+        parser.opt_list('--batch_size', type=int, default=16, options=[32, 24, 16, 10], tunable=False)
 
         # fixed parameters
-        parser.add_argument('--input_width', type=int, default=306*6,
-                            help='input image width - 28 for MNIST (must be even)')
-        parser.add_argument('--input_height', type=int, default=256,
-                            help='input image height - 28 for MNIST (must be even)')
+        parser.add_argument('--input_width', type=int, default=306*6, help='input image width')
+        parser.add_argument('--input_height', type=int, default=256)
         parser.add_argument('--output_width', type=int, default=306)
         parser.add_argument('--output_height', type=int, default=256)
         parser.add_argument('--in_channels', type=int, default=3)
