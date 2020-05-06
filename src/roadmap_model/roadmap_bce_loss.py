@@ -104,7 +104,7 @@ class RoadMap(LightningModule):
         batch_size = target_rm.size(0)
         target_rm_flat = target_rm.view(batch_size, -1)
         pred_rm_flat = pred_rm.view(batch_size, -1)
-        loss = F.binary_cross_entropy_with_logits(target_rm_flat, pred_rm_flat)
+        loss = F.binary_cross_entropy_with_logits(pred_rm_flat, target_rm_flat)
         #loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat)
 
         return loss, target_rm, pred_rm
