@@ -65,7 +65,6 @@ class BBSpatialRoadMap(LightningModule):
 
     def forward(self, x, rm):
         # spatial representation
-        import pdb; pdb.set_trace()
         spacial_rep = self.space_map_cnn(x)
 
         # selfsupervised representation
