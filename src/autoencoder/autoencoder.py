@@ -8,10 +8,14 @@ from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
 import numpy as np
+import random
 
 from src.autoencoder.components import Encoder, Decoder
 from src.utils.data_helper import UnlabeledDataset
 
+random.seed(20200505)
+np.random.seed(20200505)
+torch.manual_seed(20200505)
 
 class BasicAE(LightningModule):
     def __init__(self, hparams=None):
@@ -35,7 +39,7 @@ class BasicAE(LightningModule):
         self.output_width = hparams.output_width if hasattr(hparams, 'output_width') else 306
         self.output_height = hparams.output_height if hasattr(hparams, 'output_height') else 256
 
-        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 24
+        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 16
         self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
 
     def init_encoder(self, hidden_dim, latent_dim, in_channels, input_height, input_width):
@@ -80,7 +84,7 @@ class BasicAE(LightningModule):
         # Decode - y_hat has same dim as true y
         y_hat = self(z)
 
-        if batch_idx % 1000 == 0:
+        if batch_idx % self.hparams.output_img_freq == 0:
             self._log_images(y, y_hat, step_name)
 
         # consider replacing this reconstruction loss with something else
@@ -113,34 +117,42 @@ class BasicAE(LightningModule):
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.0005)
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
 
     def prepare_data(self):
         image_folder = self.hparams.link
+        unlabeled_scene_index = np.arange(106)
+        trainset_size = round(0.8 * len(unlabeled_scene_index))
+
+        # split into train / validation sets at the scene index level
+        # before I did this at the sample level --> this will cause leakage (!!)
+        np.random.shuffle(unlabeled_scene_index)
+        train_set_index = unlabeled_scene_index[:trainset_size]
+        valid_set_index = unlabeled_scene_index[trainset_size:]
 
         transform = torchvision.transforms.ToTensor()
 
-        unlabeled_dataset = UnlabeledDataset(image_folder=image_folder,
-                                             scene_index=np.arange(106),
-                                             first_dim='sample',
-                                             transform=transform)
+        # training set
+        self.unlabeled_trainset = UnlabeledDataset(image_folder=image_folder,
+                                                   scene_index=train_set_index,
+                                                   first_dim='sample',
+                                                   transform=transform)
 
-        trainset_size = round(0.8 * len(unlabeled_dataset))
-        validset_size = round(0.2 * len(unlabeled_dataset))
-
-        self.trainset, self.validset = torch.utils.data.random_split(unlabeled_dataset,
-                                                                      lengths = [trainset_size,
-                                                                                 validset_size])
+        # validation set
+        self.unlabeled_validset = UnlabeledDataset(image_folder=image_folder,
+                                                   scene_index=valid_set_index,
+                                                   first_dim='sample',
+                                                   transform=transform)
 
     def train_dataloader(self):
-        loader = torch.utils.data.DataLoader(self.trainset,
+        loader = torch.utils.data.DataLoader(self.unlabeled_trainset,
                                              batch_size=self.batch_size,
                                              shuffle=True,
                                              num_workers=4)
         return loader
 
     def val_dataloader(self):
-        loader = torch.utils.data.DataLoader(self.trainset,
+        loader = torch.utils.data.DataLoader(self.unlabeled_validset,
                                              batch_size=self.batch_size,
                                              shuffle=False,
                                              num_workers=4)
@@ -149,22 +161,23 @@ class BasicAE(LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
-        parser.opt_list('--hidden_dim', type=int, default=128, options=[128, 256, 512], tunable=True,
+        parser.opt_list('--hidden_dim', type=int, default=128, options=[128], tunable=False,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
-        parser.opt_list('--latent_dim', type=int, default=128, options=[64, 128, 256, 512], tunable=True,
+        parser.opt_list('--latent_dim', type=int, default=64, options=[64, 128], tunable=True,
                             help='dimension of latent variables z')
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
 
-        parser.add_argument('--input_width', type=int, default=306*6,
-                            help='input image width - 28 for MNIST (must be even)')
-        parser.add_argument('--input_height', type=int, default=256,
-                            help='input image height - 28 for MNIST (must be even)')
+        parser.opt_list('--batch_size', type=int, default=16, options=[16], tunable=False)
+
+        # fixed parameters
+        parser.add_argument('--input_width', type=int, default=306*6, help='input image width')
+        parser.add_argument('--input_height', type=int, default=256)
         parser.add_argument('--output_width', type=int, default=306)
         parser.add_argument('--output_height', type=int, default=256)
-
-        parser.opt_list('--batch_size', type=int, default=16, options=[64, 32, 24, 16, 10, 8], tunable=False)
         parser.add_argument('--in_channels', type=int, default=3)
-
-        parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
+        parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
+        #parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
+        parser.add_argument('--output_img_freq', type=int, default=500)
         return parser
 
 

@@ -9,9 +9,9 @@ import random
 import numpy as np
 import torch
 
-random.seed(0)
-np.random.seed(0)
-torch.manual_seed(0)
+random.seed(20200505)
+np.random.seed(20200505)
+torch.manual_seed(20200505)
 
 import torchvision
 from torch import nn
@@ -30,7 +30,6 @@ from src.autoencoder.autoencoder import BasicAE
 
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 class Boxes(LightningModule):
 
@@ -133,22 +132,18 @@ class Boxes(LightningModule):
         # calculate the MSE loss between coordinates
         # note: F.mse_loss calculates element wise MSE loss so I don't have to flatten tensors
         loss = F.mse_loss(target_bb, pred_bb)
-
         return loss, target_bb, pred_bb
 
     def training_step(self, batch, batch_idx):
-
-        #if self.current_epoch >= 30 and self.frozen:
-        #    self.frozen=False
-        #    self.ae.unfreeze()
-
+        if self.current_epoch >= self.hparams.unfreeze_epoch_no and self.frozen:
+            self.frozen=False
+            self.ae.unfreeze()
         train_loss, _, _ = self._run_step(batch, batch_idx, step_name='train')
         train_tensorboard_logs = {'train_loss': train_loss}
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
         val_loss, target_rm, pred_rm = self._run_step(batch, batch_idx, step_name='valid')
-
         return {'val_loss': val_loss}
 
     def validation_epoch_end(self, outputs):
@@ -162,37 +157,44 @@ class Boxes(LightningModule):
     def prepare_data(self):
         image_folder = self.hparams.link
         annotation_csv = self.hparams.link + '/annotation.csv'
+        labeled_scene_index = np.arange(106, 134)
+        trainset_size = round(0.8 * len(labeled_scene_index))
+
+        # split into train / validation sets at the scene index level
+        # before I did this at the sample level --> this will cause leakage (!!)
+        np.random.shuffle(labeled_scene_index)
+        train_set_index = labeled_scene_index[:trainset_size]
+        valid_set_index = labeled_scene_index[trainset_size:]
 
         transform = torchvision.transforms.ToTensor()
 
-        labeled_dataset = LabeledDataset(image_folder=image_folder,
-                                         annotation_file=annotation_csv,
-                                         scene_index=np.arange(106, 134),
-                                         transform=transform,
-                                         extra_info=False)
+        # training set
+        self.labeled_trainset = LabeledDataset(image_folder=image_folder,
+                                               annotation_file=annotation_csv,
+                                               scene_index=train_set_index,
+                                               transform=transform,
+                                               extra_info=False)
 
-        trainset_size = round(0.8 * len(labeled_dataset))
-        validset_size = round(0.2 * len(labeled_dataset))
-
-        # split train + valid at the sample level (ie 6 image collections) not scene/video level
-        self.trainset, self.validset = torch.utils.data.random_split(labeled_dataset,
-                                                                     lengths = [trainset_size, validset_size])
+        # validation set
+        self.labeled_validset = LabeledDataset(image_folder=image_folder,
+                                               annotation_file=annotation_csv,
+                                               scene_index=valid_set_index,
+                                               transform=transform,
+                                               extra_info=False)
 
     def train_dataloader(self):
-        loader = DataLoader(self.trainset,
+        loader = DataLoader(self.labeled_trainset,
                             batch_size=self.hparams.batch_size,
                             shuffle=True,
-                            drop_last=True,
                             num_workers=4,
                             collate_fn=collate_fn)
         return loader
 
     def val_dataloader(self):
         # don't shuffle validation batches
-        loader = DataLoader(self.validset,
+        loader = DataLoader(self.labeled_validset,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,
-                            drop_last=True,
                             num_workers=4,
                             collate_fn=collate_fn)
         return loader
@@ -203,14 +205,15 @@ class Boxes(LightningModule):
 
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
-        parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=True)
         parser.add_argument('--batch_size', type=int, default=16)
         parser.add_argument('--max_bb', type=int, default=100)
 
         # fixed arguments
-        parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
-        parser.add_argument('--pretrained_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
-        parser.add_argument('--output_img_freq', type=int, default=1000)
+        parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
+        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/dd_pretrain_ae/lightning_logs/version_9234267/checkpoints/epoch=42.ckpt')
+        parser.add_argument('--output_img_freq', type=int, default=500)
+        parser.add_argument('--unfreeze_epoch_no', type=int, default=30)
 
         return parser
 

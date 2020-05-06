@@ -22,7 +22,7 @@ random.seed(20200505)
 np.random.seed(20200505)
 torch.manual_seed(20200505)
 
-class RoadMap(LightningModule):
+class RoadMapBCE(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
@@ -73,7 +73,7 @@ class RoadMap(LightningModule):
         representations = self.ae.encoder(x)
 
         # now run through MLP
-        y = self.sigmoid(self.fc1(representations))
+        y = self.fc1(representations)
         #y = torch.sigmoid(self.fc1(representations))
 
         # reshape prediction to be tensor with b x 800 x 800
@@ -97,15 +97,15 @@ class RoadMap(LightningModule):
 
         # calculate loss between pixels
         # if self.hparams.loss_fn == "mse":
-        loss = F.mse_loss(target_rm, pred_rm)
+        #loss = F.mse_loss(target_rm, pred_rm)
 
         # elif self.hparams.loss_fn == "bce":
-        #     # flatten and calculate binary cross entropy
-        #     batch_size = target_rm.size(0)
-        #     target_rm_flat = target_rm.view(batch_size, -1)
-        #     pred_rm_flat = pred_rm.view(batch_size, -1)
-        #     loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat, reduction='mean')
-        #     #loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat)
+        # flatten and calculate binary cross entropy
+        batch_size = target_rm.size(0)
+        target_rm_flat = target_rm.view(batch_size, -1)
+        pred_rm_flat = pred_rm.view(batch_size, -1)
+        loss = F.binary_cross_entropy_with_logits(pred_rm_flat, target_rm_flat)
+        #loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat)
 
         return loss, target_rm, pred_rm
 
@@ -138,18 +138,19 @@ class RoadMap(LightningModule):
         val_loss, target_rm, pred_rm = self._run_step(batch, batch_idx, step_name='valid')
 
         # calculate threat score
-        #val_ts = compute_ts_road_map(target_rm, pred_rm)
+        val_ts = compute_ts_road_map(target_rm, pred_rm)
         val_ts_rounded = compute_ts_road_map(target_rm, pred_rm.round())
         #val_ts = torch.tensor(val_ts).type_as(val_loss)
 
-        return {'val_loss': val_loss, 'val_ts_rounded': val_ts_rounded}
+        return {'val_loss': val_loss, 'val_ts_rounded': val_ts_rounded, 'val_ts': val_ts}
 
     def validation_epoch_end(self, outputs):
         avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        #avg_val_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+        avg_val_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
         avg_val_ts_rounded = torch.stack([x['val_ts_rounded'] for x in outputs]).mean()
         val_tensorboard_logs = {'avg_val_loss': avg_val_loss,
-                                'avg_val_ts_rounded': avg_val_ts_rounded}
+                                'avg_val_ts_rounded': avg_val_ts_rounded,
+                                'avg_val_ts': avg_val_ts}
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
@@ -220,9 +221,9 @@ class RoadMap(LightningModule):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    parser = RoadMap.add_model_specific_args(parser)
+    parser = RoadMapBCE.add_model_specific_args(parser)
     args = parser.parse_args()
 
-    model = RoadMap(args)
+    model = RoadMapBCE(args)
     trainer = Trainer.from_argparse_args(args)
     trainer.fit(model)

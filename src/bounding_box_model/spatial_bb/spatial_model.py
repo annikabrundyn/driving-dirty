@@ -1,14 +1,10 @@
 import random
 import numpy as np
 import torch
-random.seed(0)
-np.random.seed(0)
-torch.manual_seed(0)
 
 from argparse import ArgumentParser, Namespace
 
 import torchvision
-from  torchvision  import transforms
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -16,15 +12,14 @@ from torch.utils.data import DataLoader
 from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
-from src.utils import convert_map_to_lane_map
 from src.utils.data_helper import LabeledDataset
-from src.utils.helper import collate_fn, boxes_to_binary_map
-
-
+from src.utils.helper import collate_fn, boxes_to_binary_map, compute_ts_road_map
 from src.autoencoder.autoencoder import BasicAE
 from src.bounding_box_model.spatial_bb.components import SpatialMappingCNN, BoxesMergingCNN
 
-from src.utils.helper import compute_ts_road_map
+random.seed(20200505)
+np.random.seed(20200505)
+torch.manual_seed(20200505)
 
 
 class BBSpatialModel(LightningModule):
@@ -37,16 +32,16 @@ class BBSpatialModel(LightningModule):
 
         # TODO: add pretrained weight path
         # TODO: remove this to train models again
-        d = dict(
-            latent_dim = 64,
-            hidden_dim = 128,
-            batch_size = 16
-        )
-        hparams2 = Namespace(**d)
+        #d = dict(
+        #    latent_dim = 64,
+        #    hidden_dim = 128,
+        #    batch_size = 16
+        #)
+        #hparams2 = Namespace(**d)
 
-        # BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
         # pretrained feature extractor - using our own trained Encoder
-        self.ae = BasicAE(hparams2)
+        self.ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
+        #self.ae = BasicAE(hparams2)
         self.frozen = True
         self.ae.freeze()
         self.ae.decoder = None
@@ -69,8 +64,6 @@ class BBSpatialModel(LightningModule):
         return x
 
     def forward(self, x):
-
-
         # spatial representation
         spacial_rep = self.space_map_cnn(x)
 
@@ -112,7 +105,7 @@ class BBSpatialModel(LightningModule):
 
         # every 10 epochs we look at inputs + predictions
         if batch_idx % self.hparams.output_img_freq == 0:
-            x0 = 1- sample[0]
+            x0 = sample[0]
             target_bb_img0 = 1 - target_bb_img[0]
             pred_bb_img0 = 1- pred_bb_img[0]
 
@@ -122,7 +115,11 @@ class BBSpatialModel(LightningModule):
         batch_size = target_bb_img.size(0)
         target_bb_img = target_bb_img.view(batch_size, -1)
         pred_bb_img = pred_bb_img.view(batch_size, -1)
-        loss = F.binary_cross_entropy(pred_bb_img, target_bb_img)
+
+        if self.hparams.mse_loss:
+            loss = F.mse_loss(pred_bb_img, target_bb_img)
+        else:
+            loss = F.binary_cross_entropy(pred_bb_img, target_bb_img)
 
         return loss, target_bb_img, pred_bb_img
 
@@ -138,7 +135,7 @@ class BBSpatialModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        if self.current_epoch >= 30 and self.frozen:
+        if self.current_epoch >= self.hparams.unfreeze_epoch_no and self.frozen:
             self.frozen=False
             self.ae.unfreeze()
 
@@ -162,28 +159,33 @@ class BBSpatialModel(LightningModule):
     def prepare_data(self):
         image_folder = self.hparams.link
         annotation_csv = self.hparams.link + '/annotation.csv'
+        labeled_scene_index = np.arange(106, 134)
+        trainset_size = round(0.8 * len(labeled_scene_index))
 
-        transform = transforms.Compose(
-            [
-                torchvision.transforms.ToTensor()
-            ]
-        )
+        # split into train / validation sets at the scene index level
+        # before I did this at the sample level --> this will cause leakage (!!)
+        np.random.shuffle(labeled_scene_index)
+        train_set_index = labeled_scene_index[:trainset_size]
+        valid_set_index = labeled_scene_index[trainset_size:]
 
-        labeled_dataset = LabeledDataset(image_folder=image_folder,
-                                         annotation_file=annotation_csv,
-                                         scene_index=np.arange(106, 134),
-                                         transform=transform,
-                                         extra_info=False)
+        transform = torchvision.transforms.ToTensor()
 
-        trainset_size = round(0.8 * len(labeled_dataset))
-        validset_size = round(0.2 * len(labeled_dataset))
+        # training set
+        self.labeled_trainset = LabeledDataset(image_folder=image_folder,
+                                               annotation_file=annotation_csv,
+                                               scene_index=train_set_index,
+                                               transform=transform,
+                                               extra_info=False)
 
-        # split train + valid at the sample level (ie 6 image collections) not scene/video level
-        self.trainset, self.validset = torch.utils.data.random_split(labeled_dataset,
-                                                                     lengths = [trainset_size, validset_size])
+        # validation set
+        self.labeled_validset = LabeledDataset(image_folder=image_folder,
+                                               annotation_file=annotation_csv,
+                                               scene_index=valid_set_index,
+                                               transform=transform,
+                                               extra_info=False)
 
     def train_dataloader(self):
-        loader = DataLoader(self.trainset,
+        loader = DataLoader(self.labeled_trainset,
                             batch_size=self.hparams.batch_size,
                             shuffle=True,
                             num_workers=4,
@@ -192,7 +194,7 @@ class BBSpatialModel(LightningModule):
 
     def val_dataloader(self):
         # don't shuffle validation batches
-        loader = DataLoader(self.validset,
+        loader = DataLoader(self.labeled_validset,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,
                             num_workers=4,
@@ -205,12 +207,15 @@ class BBSpatialModel(LightningModule):
 
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
-        parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
-        parser.add_argument('--batch_size', type=int, default=32)
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=True)
+        parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
-        parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
-        parser.add_argument('--pretrained_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
-        parser.add_argument('--output_img_freq', type=int, default=1000)
+        parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
+        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/dd_pretrain_ae/lightning_logs/version_9234267/checkpoints/epoch=42.ckpt')
+        parser.add_argument('--output_img_freq', type=int, default=500)
+        parser.add_argument('--unfreeze_epoch_no', type=int, default=20)
+
+        parser.add_argument('--mse_loss', default=False, action='store_true')
         return parser
 
 
