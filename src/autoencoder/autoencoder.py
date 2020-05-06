@@ -39,7 +39,7 @@ class BasicAE(LightningModule):
         self.output_width = hparams.output_width if hasattr(hparams, 'output_width') else 306
         self.output_height = hparams.output_height if hasattr(hparams, 'output_height') else 256
 
-        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 24
+        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 16
         self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
 
     def init_encoder(self, hidden_dim, latent_dim, in_channels, input_height, input_width):
@@ -161,13 +161,13 @@ class BasicAE(LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
-        parser.opt_list('--hidden_dim', type=int, default=128, options=[128, 256], tunable=False,
+        parser.opt_list('--hidden_dim', type=int, default=128, options=[128], tunable=False,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
         parser.opt_list('--latent_dim', type=int, default=64, options=[64, 128], tunable=True,
                             help='dimension of latent variables z')
         parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
 
-        parser.opt_list('--batch_size', type=int, default=16, options=[32, 24, 16, 10], tunable=False)
+        parser.opt_list('--batch_size', type=int, default=16, options=[16], tunable=False)
 
         # fixed parameters
         parser.add_argument('--input_width', type=int, default=306*6, help='input image width')
@@ -177,7 +177,7 @@ class BasicAE(LightningModule):
         parser.add_argument('--in_channels', type=int, default=3)
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         #parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
-        parser.add_argument('--output_img_freq', type=int, default=1000)
+        parser.add_argument('--output_img_freq', type=int, default=500)
         return parser
 
 
