@@ -4,6 +4,7 @@ This file runs the main training/val loop, etc... using Lightning Trainer
 from pytorch_lightning import Trainer
 from src.autoencoder.autoencoder import BasicAE
 from src.roadmap_model.roadmap_pretrain_ae import RoadMap
+from src.roadmap_model.roadmap_bce_loss import RoadMapBCE
 from src.bounding_box_model.bb_coord_reg.bb_MLP import Boxes
 from src.bounding_box_model.spatial_bb.spatial_model import BBSpatialModel
 from test_tube import HyperOptArgumentParser, SlurmCluster
@@ -12,6 +13,7 @@ import os, sys
 MODEL_NAMES = {
     'basic_ae': BasicAE,
     'roadmap_mse': RoadMap,
+    'roadmap_bce': RoadMapBCE,
     'bb_reg': Boxes,
     'spatial_bb': BBSpatialModel,
 }
@@ -69,7 +71,7 @@ if __name__ == '__main__':
 
     parser = HyperOptArgumentParser(add_help=False, strategy='grid_search')
     parser = Trainer.add_argparse_args(parser)
-    parser.add_argument('--model', type=str, default='roadmap_mse')
+    parser.add_argument('--model', type=str, default='roadmap_bce')
 
     (temp_args, arr) = parser.parse_known_args()
     model_name = temp_args.model
@@ -81,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--nodes', type=int, default=1)
     parser.add_argument('--conda_env', type=str, default='driving-dirty')
     parser.add_argument('--on_cluster', default=True, action='store_true')
-    parser.add_argument('-n', '--tt_name', default='rm_mse_oldckpt')
+    parser.add_argument('-n', '--tt_name', default='rm_bce_oldckpt')
     parser.add_argument('-d', '--tt_description', default='pretrained ae for feature extraction')
     parser.add_argument('--logs_save_path', default='/scratch/ab8690/logs')
     parser.add_argument('--single_run', dest='single_run', action='store_true')

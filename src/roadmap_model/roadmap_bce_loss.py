@@ -22,7 +22,7 @@ random.seed(20200505)
 np.random.seed(20200505)
 torch.manual_seed(20200505)
 
-class RoadMap(LightningModule):
+class RoadMapBCE(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
@@ -221,9 +221,9 @@ class RoadMap(LightningModule):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    parser = RoadMap.add_model_specific_args(parser)
+    parser = RoadMapBCE.add_model_specific_args(parser)
     args = parser.parse_args()
 
-    model = RoadMap(args)
+    model = RoadMapBCE(args)
     trainer = Trainer.from_argparse_args(args)
     trainer.fit(model)
