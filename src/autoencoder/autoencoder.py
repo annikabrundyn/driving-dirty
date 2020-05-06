@@ -51,7 +51,6 @@ class BasicAE(LightningModule):
         return decoder
 
     def six_to_one_task(self, x):
-        import pdb; pdb.set_trace()
         # reorder and stitch images together in wide format
         x = x[:, [0, 1, 2, 5, 4, 3]]
         b, num_imgs, c, h, w = x.size()
