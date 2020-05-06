@@ -65,14 +65,18 @@ class BBSpatialRoadMap(LightningModule):
 
     def forward(self, x, rm):
         # spatial representation
-        spacial_rep = self.space_map_cnn(x)
+        # x:[b, 6, 3, 256, 306] -> space_rep:[b, 32, 256, 256]
+        space_rep = self.space_map_cnn(x)
 
         # selfsupervised representation
+        # x:[b, 6, 3, 256, 306] -> x:[b, 3, 256, 1836]
         x = self.wide_stitch_six_images(x)
+        # [b, 3, 256, 1836] -> ssr: [b, 32, 128, 918]
         ssr = self.ae.encoder(x, c3_only=True)
 
-        # combine two -> [b, 800, 800]
-        yhat = self.box_merge(ssr, spacial_rep, rm)
+        # combine all three to be -> [b, 1, 800, 800]
+        yhat = self.box_merge(ssr, space_rep, rm)
+        # [b, 1, 800, 800] -> [b, 800, 800]
         yhat = yhat.squeeze(1)
 
         return yhat
@@ -110,8 +114,8 @@ class BBSpatialRoadMap(LightningModule):
         # every 10 epochs we look at inputs + predictions
         if batch_idx % self.hparams.output_img_freq == 0:
             x0 = sample[0]
-            target_bb_img0 = 1 - target_bb_img[0]
-            pred_bb_img0 = 1- pred_bb_img[0]
+            target_bb_img0 = target_bb_img[0]
+            pred_bb_img0 = pred_bb_img[0]
 
             self._log_rm_images(x0, target_bb_img0, pred_bb_img0, step_name)
 
@@ -129,9 +133,10 @@ class BBSpatialRoadMap(LightningModule):
 
     def _log_rm_images(self, x, target, pred, step_name, limit=1):
 
-        input_images = torchvision.utils.make_grid(x, normalize=True)
-        target = torchvision.utils.make_grid(target, normalize=True)
-        pred = torchvision.utils.make_grid(pred, normalize=True)
+        # can choose normalize=True answer
+        input_images = torchvision.utils.make_grid(x)
+        target = torchvision.utils.make_grid(target)
+        pred = torchvision.utils.make_grid(pred)
 
         self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
         self.logger.experiment.add_image(f'{step_name}_target_bbs', target, self.trainer.global_step)
@@ -139,7 +144,7 @@ class BBSpatialRoadMap(LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        if self.current_epoch >= self.hparams.unfreeze_epoch_no and self.frozen:
+        if self.current_epoch >= self.hparams.unfreeze_epoch_no  and self.frozen:
             self.frozen=False
             self.ae.unfreeze()
 
