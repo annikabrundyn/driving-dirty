@@ -1,0 +1,12 @@
+Hey I know you said you turned off your phone, so wanted to send this message in case you submit the jobs and they fail at like 4:20am. 
+
+
+When you transform the targets into the bounding boxes on the 800x800 grid, 
+
+https://github.com/annikabrundyn/driving-dirty/blob/089d9dd91480767042f428b99e5e0dc9df2fcfe0/src/bounding_box_model/spatial_bb/spatial_model.py#L80
+
+which uses https://github.com/annikabrundyn/driving-dirty/blob/089d9dd91480767042f428b99e5e0dc9df2fcfe0/src/utils/bb_to_img.py#L6
+
+you correctly detach it to cpu to draw it all out, but I never see when it gets sent back to the gpu. Will this affect stuff? 
+
+Feel free to ignore if you're all good... 
