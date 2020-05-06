@@ -21,13 +21,26 @@ class BasicAE(LightningModule):
     def __init__(self, hparams=None):
         super().__init__()
         # attach hparams to log hparams to the loggers (like tensorboard)
-        #self.__check_hparams(hparams)
+        self.__check_hparams(hparams)
         self.hparams = hparams
 
         self.encoder = self.init_encoder(self.hidden_dim, self.latent_dim,
                                          self.in_channels, self.input_height, self.input_width)
         self.decoder = self.init_decoder(self.hidden_dim, self.latent_dim,
                                          self.in_channels, self.output_height, self.output_width)
+
+    def __check_hparams(self, hparams):
+        self.hidden_dim = hparams.hidden_dim if hasattr(hparams, 'hidden_dim') else 128
+        self.latent_dim = hparams.latent_dim if hasattr(hparams, 'latent_dim') else 128
+
+        self.input_width = hparams.input_width if hasattr(hparams, 'input_width') else 306*6
+        self.input_height = hparams.input_height if hasattr(hparams, 'input_height') else 256
+
+        self.output_width = hparams.output_width if hasattr(hparams, 'output_width') else 306
+        self.output_height = hparams.output_height if hasattr(hparams, 'output_height') else 256
+
+        self.batch_size = hparams.batch_size if hasattr(hparams, 'batch_size') else 24
+        self.in_channels = hparams.in_channels if hasattr(hparams, 'in_channels') else 3
 
     def init_encoder(self, hidden_dim, latent_dim, in_channels, input_height, input_width):
         encoder = Encoder(hidden_dim, latent_dim, in_channels, input_height, input_width)
@@ -153,7 +166,7 @@ class BasicAE(LightningModule):
                             help='itermediate layers dimension before embedding for default encoder/decoder')
         parser.opt_list('--latent_dim', type=int, default=64, options=[64, 128], tunable=True,
                             help='dimension of latent variables z')
-        parser.opt_list('--learning_rate', type=float, default=0.005, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
 
         parser.opt_list('--batch_size', type=int, default=16, options=[32, 24, 16, 10], tunable=False)
 
