@@ -32,16 +32,16 @@ class BBSpatialModel(LightningModule):
 
         # TODO: add pretrained weight path
         # TODO: remove this to train models again
-        d = dict(
-            latent_dim = 64,
-            hidden_dim = 128,
-            batch_size = 16
-        )
-        hparams2 = Namespace(**d)
+        #d = dict(
+        #    latent_dim = 64,
+        #    hidden_dim = 128,
+        #    batch_size = 16
+        #)
+        #hparams2 = Namespace(**d)
 
-        # BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
         # pretrained feature extractor - using our own trained Encoder
-        self.ae = BasicAE(hparams2)
+        self.ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
+        #self.ae = BasicAE(hparams2)
         self.frozen = True
         self.ae.freeze()
         self.ae.decoder = None
@@ -131,7 +131,7 @@ class BBSpatialModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        if self.current_epoch >= 3 and self.frozen:
+        if self.current_epoch >= self.hparams.unfreeze_epoch_no and self.frozen:
             self.frozen=False
             self.ae.unfreeze()
 
@@ -209,6 +209,7 @@ class BBSpatialModel(LightningModule):
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/dd_pretrain_ae/lightning_logs/version_9234267/checkpoints/epoch=42.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=500)
+        parser.add_argument('--unfreeze_epoch_no', type=int, default=20)
         return parser
 
 
