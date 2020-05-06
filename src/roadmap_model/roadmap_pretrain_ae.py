@@ -49,6 +49,7 @@ class RoadMap(LightningModule):
         # MLP layers: feature embedding --> predict binary roadmap
         self.fc1 = nn.Linear(self.ae.latent_dim, self.output_dim)
         #self.fc2 = nn.Linear(200000, self.output_dim)
+        self.sigmoid = nn.Sigmoid()
 
     def wide_stitch_six_images(self, sample):
         # change from tuple len([6 x 3 x H x W]) = b --> tensor [b x 6 x 3 x H x W]
@@ -72,7 +73,7 @@ class RoadMap(LightningModule):
         representations = self.ae.encoder(x)
 
         # now run through MLP
-        y = nn.Sigmoid(self.fc1(representations))
+        y = self.sigmoid(self.fc1(representations))
         #y = torch.sigmoid(self.fc1(representations))
 
         # reshape prediction to be tensor with b x 800 x 800
