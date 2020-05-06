@@ -96,16 +96,16 @@ class RoadMap(LightningModule):
             self._log_rm_images(x, target_rm, pred_rm, step_name)
 
         # calculate loss between pixels
-        if self.hparams.loss_fn == "mse":
-            loss = F.mse_loss(target_rm, pred_rm)
+        # if self.hparams.loss_fn == "mse":
+        loss = F.mse_loss(target_rm, pred_rm)
 
-        elif self.hparams.loss_fn == "bce":
-            # flatten and calculate binary cross entropy
-            batch_size = target_rm.size(0)
-            target_rm_flat = target_rm.view(batch_size, -1)
-            pred_rm_flat = pred_rm.view(batch_size, -1)
-            loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat, reduction='mean')
-            #loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat)
+        # elif self.hparams.loss_fn == "bce":
+        #     # flatten and calculate binary cross entropy
+        #     batch_size = target_rm.size(0)
+        #     target_rm_flat = target_rm.view(batch_size, -1)
+        #     pred_rm_flat = pred_rm.view(batch_size, -1)
+        #     loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat, reduction='mean')
+        #     #loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat)
 
         return loss, target_rm, pred_rm
 
@@ -207,7 +207,7 @@ class RoadMap(LightningModule):
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
         parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
-        parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=True)
+        #parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=True)
 
         parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
