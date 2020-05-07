@@ -18,7 +18,7 @@ def log_fast_rcnn_images(self, x, pred_coords, pred_categ, target_coords, target
     self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
 
     pred_rm_w_boxes = plot_all_colour_boxes(pred_coords, pred_categ, road_image)
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     target_rm_w_boxes = plot_all_colour_boxes(target_coords, target_categ, road_image)
 
     # for outputting the matplotlib figures
@@ -29,6 +29,7 @@ def log_fast_rcnn_images(self, x, pred_coords, pred_categ, target_coords, target
 def plot_all_colour_boxes(coords, categories, rm):
     fig, ax = plt.subplots()
     color_list = ['b', 'g', 'orange', 'c', 'm', 'y', 'k', 'w', 'r']
+    ax.set(xlim=(0, 800), ylim=(0, 800))
     ax.imshow(rm.cpu().float(), cmap='binary')
     # ego car position
     #ax.plot(400, 400, 'x', color="red")
