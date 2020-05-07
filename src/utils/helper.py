@@ -11,6 +11,30 @@ from shapely.geometry import Polygon
 from PIL import Image, ImageDraw
 
 
+def log_fast_rcnn_images(self, x, pred_coords, pred_categ, target_coords, target_categ, road_image, step_name):
+
+    input_images = torchvision.utils.make_grid(x)
+
+    self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
+
+    pred_rm_w_boxes = plot_all_colour_boxes(pred_coords, pred_categ, road_image)
+    target_rm_w_boxes = plot_all_colour_boxes(target_coords, target_categ, road_image)
+
+    # for outputting the matplotlib figures
+    self.logger.experiment.add_figure(f'{step_name}_pred_boxes', pred_rm_w_boxes, self.trainer.global_step)
+    self.logger.experiment.add_figure(f'{step_name}_target_boxes', target_rm_w_boxes, self.trainer.global_step)
+
+def plot_all_colour_boxes(coords, categories, rm):
+    fig, ax = plt.subplots()
+    color_list = ['b', 'g', 'orange', 'c', 'm', 'y', 'k', 'w', 'r']
+    ax.imshow(rm, cmap='binary')
+    # ego car position
+    ax.plot(400, 400, 'x', color="red")
+    for i, bb in enumerate(coords):
+        draw_box(ax, bb.cpu().float(), color=color_list[categories[i]])
+    return fig
+
+
 def boxes_to_binary_map(x):
 
     x = x.cpu().numpy()

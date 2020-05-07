@@ -13,12 +13,14 @@ from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
 from src.utils.data_helper import LabeledDataset
-from src.utils.helper import collate_fn, boxes_to_binary_map, compute_ts_road_map
+from src.utils.helper import collate_fn, boxes_to_binary_map, compute_ts_road_map, log_fast_rcnn_images
 from src.autoencoder.autoencoder import BasicAE
 from src.bounding_box_model.spatial_bb.components import SpatialMappingCNN, RoadMapBoxesMergingCNN
 
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
+
+import matplotlib.pyplot as plt
 
 random.seed(20200505)
 np.random.seed(20200505)
@@ -101,22 +103,68 @@ class BBSpatialRoadMap(LightningModule):
         # aggregate losses
         losses = self(images, target)
 
+        # log images
+        #if batch_idx % self.hparams.output_img_freq == 0:
+
+
         # in training, the output is a dict of scalars
         if step_name == 'train':
             loss_classifier = losses['loss_classifier'].double()
             loss_box_reg = losses['loss_box_reg'].double()
             loss_objectness = losses['loss_objectness'].double()
             loss_rpn_box_reg = losses['loss_rpn_box_reg'].double()
-            loss = loss_classifier + loss_box_reg + loss_objectness #+ loss_rpn_box_reg
+            loss = loss_classifier + loss_box_reg + loss_objectness + loss_rpn_box_reg
+            return loss, loss_classifier, loss_box_reg, loss_objectness, loss_rpn_box_reg
         else:
             # in val, the output is a dic of boxes and losses
+            # TODO: get boxes - transform corner coordinates -> 4 coordinates for original plot function
             loss = []
             for d in losses:
                 loss.append(d['scores'])
             loss = torch.stack(loss).mean()
 
-        return loss
+            if batch_idx % self.hparams.output_img_freq == 0:
+                ### --- log one validation predicted image ---
+                predicted_coords_0 = loss[0]['boxes']
+                # transform [N, 4] -> [N, 2, 4]
+                predicted_coords_0 = self._change_to_old_coord_sys(predicted_coords_0)
+                pred_categories_0 = loss[0]['labels']
 
+                target_coords_0 = target[0]['boxes']
+                target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
+                target_categories_0 = loss[0]['labels']
+
+                log_fast_rcnn_images(self, images[0], predicted_coords_0, pred_categories_0,
+                                     target_coords_0, target_categories_0,
+                                     road_image[0],
+                                     step_name)
+
+            return loss, None, None, None, None
+
+    def _change_to_old_coord_sys(self, boxes):
+        # boxes dim: [N, 4]
+        x_1 = x_3 = boxes[:, 0]
+        y_1 = y_4 = boxes[:, 1]
+        x_2 = x_4 = boxes[:, 2]
+        y_2 = y_3 = boxes[:, 3]
+
+        x_coords = torch.stack([x_2, x_4, x_1, x_3], dim=1)
+        y_coords = torch.stack([y_2, y_4, y_1, y_3], dim=1)
+        old_coords = torch.stack([x_coords, y_coords], dim=1)
+
+        # old_coords: [N, 2, 4]
+        return old_coords
+
+    def _change_coord_sys(self, boxes):
+        # boxes dim: [N, 2, 4]
+        max_x = boxes[:, 0].max(dim=1)[0]
+        min_x = boxes[:, 0].min(dim=1)[0]
+        max_y = boxes[:, 1].max(dim=1)[0]
+        min_y = boxes[:, 1].min(dim=1)[0]
+
+        # output dim: [N, 4] where each box has [x1, x2, x3, x4]
+        coords = torch.stack([min_x, min_y, max_x, max_y], dim=1)
+        return coords
 
     def _format_for_fastrcnn(self, images, target):
         # split batch into list of single images
@@ -128,23 +176,13 @@ class BBSpatialRoadMap(LightningModule):
             d['boxes'] = d.pop('bounding_box')
             d['labels'] = d.pop('category')
 
-            # Change coords to (x0, y0, x1, y1) by taking the top left and bottom right corners
+            # Change coords to (x0, y0, x1, y1) ie top left and bottom right corners
             # TODO: verify
-            num_boxes = d['boxes'].size(0)
-            d['boxes'] = d['boxes'][:, :, [0, -1]].reshape(num_boxes, -1).float()
+            d['boxes'] = self._change_coord_sys(d['boxes']).float()
+            #num_boxes = d['boxes'].size(0)
+            #d['boxes'] = d['boxes'][:, :, [0, -1]].reshape(num_boxes, -1).float()
 
         return images, target
-
-    def _log_rm_images(self, x, target, pred, step_name, limit=1):
-
-        # can choose normalize=True answer
-        input_images = torchvision.utils.make_grid(x)
-        target = torchvision.utils.make_grid(target)
-        pred = torchvision.utils.make_grid(pred)
-
-        self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
-        self.logger.experiment.add_image(f'{step_name}_target_bbs', target, self.trainer.global_step)
-        self.logger.experiment.add_image(f'{step_name}_pred_bbs', pred, self.trainer.global_step)
 
     def training_step(self, batch, batch_idx):
 
@@ -152,12 +190,19 @@ class BBSpatialRoadMap(LightningModule):
             self.frozen=False
             #self.backbone.train()
 
-        train_loss = self._run_step(batch, batch_idx, step_name='train')
-        train_tensorboard_logs = {'train_loss': train_loss}
+        train_loss, loss_classifier, loss_box_reg, loss_objectness, loss_rpn_box_reg = self._run_step(batch,
+                                                                                                batch_idx,
+                                                                                                step_name='train')
+        train_tensorboard_logs = {'train_loss': train_loss,
+                                  'train_loss_classifier': loss_classifier,
+                                  'train_loss_box_reg': loss_box_reg,
+                                  'train_loss_objectness': loss_objectness,
+                                  'train_loss_rpn_box_reg': loss_rpn_box_reg}
+
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        val_loss = self._run_step(batch, batch_idx, step_name='valid')
+        val_loss, _, _, _, _ = self._run_step(batch, batch_idx, step_name='valid')
 
         return {'val_loss': val_loss}
 
@@ -225,7 +270,7 @@ class BBSpatialRoadMap(LightningModule):
         # fixed arguments
         parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         parser.add_argument('--pretrained_path', type=str, default='/Users/annika/Desktop/dl_data/epoch=42.ckpt')
-        parser.add_argument('--output_img_freq', type=int, default=500)
+        parser.add_argument('--output_img_freq', type=int, default=5)
         parser.add_argument('--unfreeze_epoch_no', type=int, default=0)
 
         parser.add_argument('--mse_loss', default=False, action='store_true')

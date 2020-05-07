@@ -40,6 +40,7 @@ class Boxes(LightningModule):
         self.ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
         self.frozen = True
         self.ae.freeze()
+        #self.backbone.c3_only = False
         self.ae.decoder = None
 
         # calculate output dim = padded no of bbs * 8 coordinates
