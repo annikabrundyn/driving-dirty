@@ -117,17 +117,16 @@ class BBSpatialRoadMap(LightningModule):
             return loss, loss_classifier, loss_box_reg, loss_objectness, loss_rpn_box_reg
         else:
             # in val, the output is a dic of boxes and losses
-            import pdb; pdb.set_trace()
-            loss = []
-            for d in losses:
-                loss.append(d['scores'])
-            loss = torch.stack(loss).mean()
+            #import pdb; pdb.set_trace()
+            #loss = []
+            #for d in losses:
+            #    loss.append(d['scores'].view(-1))
+            #loss = torch.cat(loss).mean()
 
             # ----------------------
             # LOG VALIDATION IMAGES
             # ----------------------
             if batch_idx % self.hparams.output_img_freq == 0:
-                #import pdb; pdb.set_trace()
                 ### --- log one validation predicted image ---
                 # [N, 4]
                 predicted_coords_0 = losses[0]['boxes']
@@ -144,7 +143,7 @@ class BBSpatialRoadMap(LightningModule):
                                      road_image[0],
                                      step_name)
 
-            return loss, None, None, None, None
+            #return loss, None, None, None, None
 
     def _change_to_old_coord_sys(self, boxes):
         # boxes dim: [N, 4]
@@ -207,14 +206,13 @@ class BBSpatialRoadMap(LightningModule):
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        val_loss, _, _, _, _ = self._run_step(batch, batch_idx, step_name='valid')
+        self._run_step(batch, batch_idx, step_name='valid')
+        #return {'val_loss': val_loss}
 
-        return {'val_loss': val_loss}
-
-    def validation_epoch_end(self, outputs):
-        avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        val_tensorboard_logs = {'avg_val_loss': avg_val_loss}
-        return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
+    #def validation_epoch_end(self, outputs):
+        #avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        #val_tensorboard_logs = {'avg_val_loss': avg_val_loss}
+        #return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
