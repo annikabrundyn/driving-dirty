@@ -129,14 +129,16 @@ class BBSpatialRoadMap(LightningModule):
             if batch_idx % self.hparams.output_img_freq == 0:
                 import pdb; pdb.set_trace()
                 ### --- log one validation predicted image ---
+                # [N, 4]
                 predicted_coords_0 = losses[0]['boxes']
                 # transform [N, 4] -> [N, 2, 4]
                 predicted_coords_0 = self._change_to_old_coord_sys(predicted_coords_0)
+                # [N]
                 pred_categories_0 = losses[0]['labels']
 
                 target_coords_0 = target[0]['boxes']
                 target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
-                target_categories_0 = losses[0]['labels']
+                target_categories_0 = target[0]['labels']
 
                 log_fast_rcnn_images(self, images[0], predicted_coords_0, pred_categories_0,
                                      target_coords_0, target_categories_0,
