@@ -24,12 +24,16 @@ def log_fast_rcnn_images(self, x, pred_coords, pred_categ, target_coords, target
     self.logger.experiment.add_figure(f'{step_name}_pred_boxes', pred_rm_w_boxes, self.trainer.global_step)
     self.logger.experiment.add_figure(f'{step_name}_target_boxes', target_rm_w_boxes, self.trainer.global_step)
 
+
 def plot_all_colour_boxes(coords, categories, rm):
+    coords = coords.detach()
+    categories = categories.detach()
+    rm = rm.detach()
     fig, ax = plt.subplots()
     color_list = ['b', 'g', 'orange', 'c', 'm', 'y', 'k', 'w', 'r']
     ax.imshow(rm.cpu().float(), cmap='binary')
     # ego car position
-    ax.plot(400, 400, 'x', color="red")
+    #ax.plot(400, 400, 'x', color="red")
     for i, bb in enumerate(coords):
         draw_box(ax, bb.cpu().float(), color=color_list[categories[i]])
     return fig
