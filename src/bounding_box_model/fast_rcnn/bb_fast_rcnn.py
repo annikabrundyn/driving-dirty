@@ -63,7 +63,7 @@ class BBSpatialRoadMap(LightningModule):
                                                         sampling_ratio=2)
         self.fast_rcnn = FasterRCNN(
             self.backbone,
-            num_classes=8,
+            num_classes=9,
             rpn_anchor_generator=anchor_generator,
             box_roi_pool=roi_pooler
         )
@@ -84,8 +84,8 @@ class BBSpatialRoadMap(LightningModule):
         return x
 
     def forward(self, ssr, targets):
-        predictions = self.fast_rcnn(ssr, targets)
-        return predictions
+        losses_dict = self.fast_rcnn(ssr, targets)
+        return losses_dict
 
     def _run_step(self, batch, batch_idx, step_name):
         # images, target and roadimage are tuples
@@ -99,20 +99,29 @@ class BBSpatialRoadMap(LightningModule):
         images, target = self._format_for_fastrcnn(images, target)
 
         # aggregate losses
-        losses_dict = self(images, target)
-        all_losses = []
-        for ld in losses_dict:
-            score = ld['scores']
-            all_losses.append(score)
+        losses = self(images, target)
 
-        all_losses = torch.stack(all_losses)
-        loss = all_losses.mean()
+        # in training, the output is a dict of scalars
+        if step_name == 'train':
+            loss_classifier = losses['loss_classifier'].double()
+            loss_box_reg = losses['loss_box_reg'].double()
+            loss_objectness = losses['loss_objectness'].double()
+            loss_rpn_box_reg = losses['loss_rpn_box_reg'].double()
+            loss = loss_classifier + loss_box_reg + loss_objectness #+ loss_rpn_box_reg
+        else:
+            # in val, the output is a dic of boxes and losses
+            loss = []
+            for d in losses:
+                loss.append(d['scores'])
+            loss = torch.stack(loss).mean()
 
         return loss
 
+
     def _format_for_fastrcnn(self, images, target):
         # split batch into list of single images
-        images = list(image for image in images)
+        # [b, 3, 256, 1836] --> list of length b with elements [3, 256, 1836]
+        images = list(image.float() for image in images)
 
         target = [{k: v for k, v in t.items()} for t in target]
         for d in target:
@@ -122,7 +131,7 @@ class BBSpatialRoadMap(LightningModule):
             # Change coords to (x0, y0, x1, y1) by taking the top left and bottom right corners
             # TODO: verify
             num_boxes = d['boxes'].size(0)
-            d['boxes'] = d['boxes'][:, :, [0, -1]].reshape(num_boxes, -1)
+            d['boxes'] = d['boxes'][:, :, [0, -1]].reshape(num_boxes, -1).float()
 
         return images, target
 
@@ -139,7 +148,7 @@ class BBSpatialRoadMap(LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        if self.current_epoch >= self.hparams.unfreeze_epoch_no  and self.frozen:
+        if self.current_epoch >= self.hparams.unfreeze_epoch_no and self.frozen:
             self.frozen=False
             #self.backbone.train()
 
