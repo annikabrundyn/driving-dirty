@@ -119,4 +119,52 @@ class BoxesMergingCNN(nn.Module):
         return x
 
 
+class RoadMapBoxesMergingCNN(nn.Module):
+    """
+    Merges ssl representations + spatial mapping
+    """
 
+    def __init__(self):
+        super().__init__()
+        self.ss_conv = nn.Conv2d(32, 32, kernel_size=(1, 24), stride=(1, 7))
+        self.ss_deconv = nn.ConvTranspose2d(32, 32, kernel_size=2, stride=2)
+
+        self.rm_conv_1 = nn.Conv2d(1, 32, kernel_size=7, stride=3, dilation=3, padding=1)
+        self.rm_conv_2 = nn.Conv2d(32, 32, kernel_size=3, stride=1, dilation=3)
+
+        self.up_conv_1 = nn.ConvTranspose2d(96, 64, kernel_size=7, stride=1, dilation=7)
+        self.up_conv_2 = nn.ConvTranspose2d(64, 32, kernel_size=7, stride=1, dilation=7)
+        self.up_conv_3 = nn.ConvTranspose2d(32, 16, kernel_size=7, stride=1, dilation=7)
+        self.up_conv_4 = nn.ConvTranspose2d(16, 8, kernel_size=7, stride=1, dilation=3)
+        self.up_conv_5 = nn.ConvTranspose2d(8, 1, kernel_size=2, stride=2)
+
+    def forward(self, ssr, spatial_map, rm):
+        # ssr = (b, 32, 128, 918)
+        # spatial_block = (b, 32, 256, 256)
+
+        # -----------------------------
+        # make all representations the same size
+        # -----------------------------
+        # (b, 32, 128, 128) -> (b, 32, 256, 256)
+        ssr = F.relu(self.ss_conv(ssr))
+        ssr = F.relu(self.ss_deconv(ssr))
+
+        rm = F.relu(self.rm_conv_1(rm))
+        rm = F.relu(self.rm_conv_2(rm))
+
+        # -----------------------------
+        # merge representations
+        # -----------------------------
+        # import pdb; pdb.set_trace()
+        x = torch.cat([ssr, spatial_map, rm], dim=1)
+
+        # -----------------------------
+        # upsample back to 800 x 800
+        # -----------------------------
+        x = F.relu(self.up_conv_1(x))
+        x = F.relu(self.up_conv_2(x))
+        x = F.relu(self.up_conv_3(x))
+        x = F.relu(self.up_conv_4(x))
+        x = F.sigmoid(self.up_conv_5(x))
+
+        return x
