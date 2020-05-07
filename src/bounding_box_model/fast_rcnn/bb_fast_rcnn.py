@@ -123,6 +123,9 @@ class BBSpatialRoadMap(LightningModule):
                 loss.append(d['scores'])
             loss = torch.stack(loss).mean()
 
+            # ----------------------
+            # LOG VALIDATION IMAGES
+            # ----------------------
             if batch_idx % self.hparams.output_img_freq == 0:
                 ### --- log one validation predicted image ---
                 predicted_coords_0 = losses[0]['boxes']
