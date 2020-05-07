@@ -119,7 +119,7 @@ class BasicAE(LightningModule):
     def configure_optimizers(self):
         if scheduler: 
             optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
-            scheduler = torch.optim.scheduler.ReduceLROnPlateua(optimizer,patience=10)
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateua(optimizer,patience=10)
             return [optimizer], [scheduler]
         if not scheduler: 
             return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
