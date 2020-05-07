@@ -1,0 +1,37 @@
+/home/ab8690/.bash_profile: line 1: syntax error in conditional expression: unexpected token `;'
+/home/ab8690/.bash_profile: line 1: syntax error near `;'
+/home/ab8690/.bash_profile: line 1: `if [[ -r ~/.bashrc]]; then'
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+If your shell is Bash or a Bourne variant, enable conda for the current user with
+
+    $ echo ". /share/apps/anaconda3/5.3.1/etc/profile.d/conda.sh" >> ~/.bashrc
+
+or, for all users, enable conda with
+
+    $ sudo ln -s /share/apps/anaconda3/5.3.1/etc/profile.d/conda.sh /etc/profile.d/conda.sh
+
+The options above will permanently enable the 'conda' command, but they do NOT
+put conda's base (root) environment on PATH.  To do so, run
+
+    $ conda activate
+
+in your terminal, or to put the base environment on PATH permanently, run
+
+    $ echo "conda activate" >> ~/.bashrc
+
+Previous to conda 4.4, the recommended way to activate conda was to modify PATH in
+your ~/.bashrc file.  You should manually remove the line that looks like
+
+    export PATH="/share/apps/anaconda3/5.3.1/bin:$PATH"
+
+^^^ The above line should NO LONGER be in your ~/.bashrc file! ^^^
+
+
+
+EnvironmentLocationNotFound: Not a conda environment: /home/ab8690/.conda/envs/dirty-driving
+
+Traceback (most recent call last):
+  File "src/autoencoder/autoencoder.py", line 4, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'

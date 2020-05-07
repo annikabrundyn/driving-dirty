@@ -47,7 +47,7 @@ def run_on_cluster(hyperparams):
                            log_path=hyperparams.logs_save_path)
 
     # email results if your hpc supports it
-    cluster.notify_job_status(email='nsk367@nyu.edu', on_done=True, on_fail=True)
+    cluster.notify_job_status(email='ab8690@nyu.edu', on_done=True, on_fail=True)
     # any modules for code to run in env
     cluster.add_command(f'source activate {hyperparams.conda_env}')
     # pick the gpu resources
