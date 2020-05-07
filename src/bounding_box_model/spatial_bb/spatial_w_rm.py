@@ -44,6 +44,7 @@ class BBSpatialRoadMap(LightningModule):
         #self.ae = BasicAE(hparams2)
         self.frozen = True
         self.ae.freeze()
+        self.ae.c3_only = True
         self.ae.decoder = None
 
         self.space_map_cnn = SpatialMappingCNN()
@@ -72,7 +73,7 @@ class BBSpatialRoadMap(LightningModule):
         # x:[b, 6, 3, 256, 306] -> x:[b, 3, 256, 1836]
         x = self.wide_stitch_six_images(x)
         # [b, 3, 256, 1836] -> ssr: [b, 32, 128, 918]
-        ssr = self.ae.encoder(x, c3_only=True)
+        ssr = self.ae.encoder(x)
 
         # combine all three to be -> [b, 1, 800, 800]
         yhat = self.box_merge(ssr, space_rep, rm)

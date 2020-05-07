@@ -45,12 +45,12 @@ class BBSpatialRoadMap(LightningModule):
         # ------------------
         # PRE-TRAINED MODEL
         # ------------------
-        self.backbone = BasicAE(hparams2)
         #self.backbone = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
-        self.backbone.encoder.c3_only = True
+        ae = BasicAE(hparams2)
+        ae.freeze()
+        self.backbone = ae.encoder
+        self.backbone.c3_only = True
         self.backbone.out_channels = 32
-        self.backbone.freeze()
-        self.backbone.decoder = None
 
         # ------------------
         # FAST RCNN
@@ -84,21 +84,47 @@ class BBSpatialRoadMap(LightningModule):
         return x
 
     def forward(self, ssr, targets):
-        predictions = self.fast_rcnn(ssr)
+        predictions = self.fast_rcnn(ssr, targets)
         return predictions
 
     def _run_step(self, batch, batch_idx, step_name):
         # images, target and roadimage are tuples
         images, target, road_image = batch
 
+        # 6 images to 1 long one
+        images = torch.stack(images, dim=0)
+        images = self.wide_stitch_six_images(images)
+
+        # adjust format for FastRCNN
+        images, target = self._format_for_fastrcnn(images, target)
+
+        # aggregate losses
+        losses_dict = self(images, target)
+        all_losses = []
+        for ld in losses_dict:
+            score = ld['scores']
+            all_losses.append(score)
+
+        all_losses = torch.stack(all_losses)
+        loss = all_losses.mean()
+
+        return loss
+
+    def _format_for_fastrcnn(self, images, target):
         # split batch into list of single images
         images = list(image for image in images)
 
-        targets = [{k: v for k, v in t.items() for t in target}]
+        target = [{k: v for k, v in t.items()} for t in target]
+        for d in target:
+            d['boxes'] = d.pop('bounding_box')
+            d['labels'] = d.pop('category')
 
-        losses, detections = self(images, targets)
+            # Change coords to (x0, y0, x1, y1) by taking the top left and bottom right corners
+            # TODO: verify
+            num_boxes = d['boxes'].size(0)
+            d['boxes'] = d['boxes'][:, :, [0, -1]].reshape(num_boxes, -1)
 
-        return losses.mean()
+        return images, target
 
     def _log_rm_images(self, x, target, pred, step_name, limit=1):
 
@@ -115,14 +141,14 @@ class BBSpatialRoadMap(LightningModule):
 
         if self.current_epoch >= self.hparams.unfreeze_epoch_no  and self.frozen:
             self.frozen=False
-            self.ae.unfreeze()
+            #self.backbone.train()
 
-        train_loss, _, _ = self._run_step(batch, batch_idx, step_name='train')
+        train_loss = self._run_step(batch, batch_idx, step_name='train')
         train_tensorboard_logs = {'train_loss': train_loss}
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        val_loss, target_rm, pred_rm = self._run_step(batch, batch_idx, step_name='valid')
+        val_loss = self._run_step(batch, batch_idx, step_name='valid')
 
         return {'val_loss': val_loss}
 
