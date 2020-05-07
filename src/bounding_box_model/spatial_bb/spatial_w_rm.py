@@ -44,7 +44,7 @@ class BBSpatialRoadMap(LightningModule):
         #self.ae = BasicAE(hparams2)
         self.frozen = True
         self.ae.freeze()
-        self.ae.c3_only = True
+        self.ae.encoder.c3_only = True
         self.ae.decoder = None
 
         self.space_map_cnn = SpatialMappingCNN()
