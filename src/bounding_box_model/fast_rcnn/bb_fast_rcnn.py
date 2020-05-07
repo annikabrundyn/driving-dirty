@@ -127,7 +127,7 @@ class BBSpatialRoadMap(LightningModule):
             # LOG VALIDATION IMAGES
             # ----------------------
             if batch_idx % self.hparams.output_img_freq == 0:
-                import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
                 ### --- log one validation predicted image ---
                 # [N, 4]
                 predicted_coords_0 = losses[0]['boxes']
