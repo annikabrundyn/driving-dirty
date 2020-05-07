@@ -165,7 +165,7 @@ class BasicAE(LightningModule):
                             help='itermediate layers dimension before embedding for default encoder/decoder')
         parser.opt_list('--latent_dim', type=int, default=64, options=[64, 128], tunable=True,
                             help='dimension of latent variables z')
-        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=True)
 
         parser.opt_list('--batch_size', type=int, default=16, options=[16], tunable=False)
 
