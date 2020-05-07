@@ -104,7 +104,6 @@ class RoadMapBCE(LightningModule):
         target_rm_flat = target_rm.view(batch_size, -1)
         pred_rm_flat = pred_rm.view(batch_size, -1)
         loss = F.binary_cross_entropy_with_logits(pred_rm_flat, target_rm_flat) #ok. 
-        #loss = F.binary_cross_entropy(target_rm_flat, pred_rm_flat)
 
         return loss, target_rm, pred_rm, pred_logit_rm 
 
@@ -153,8 +152,10 @@ class RoadMapBCE(LightningModule):
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
-
+        optimizer =  torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,patience=10)
+        return [optimizer], [scheduler]
+        
     def prepare_data(self):
         image_folder = self.hparams.link
         annotation_csv = self.hparams.link + '/annotation.csv'
@@ -206,8 +207,8 @@ class RoadMapBCE(LightningModule):
 
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
-        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=True)
-        parser.opt_list('--unfreeze_epoch_no', type=int, default=20, options=[0, 20], tunable=True)
+        parser.opt_list('--learning_rate', type=float, default=1e-3, options=[1e-3, 1e-4, 1e-5], tunable=False)
+        parser.opt_list('--unfreeze_epoch_no', type=int, default=0, options=[0, 20], tunable=True)
         #parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=True)
 
         parser.add_argument('--batch_size', type=int, default=16)
