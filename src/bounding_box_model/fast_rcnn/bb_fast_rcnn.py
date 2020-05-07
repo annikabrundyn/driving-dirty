@@ -117,7 +117,7 @@ class BBSpatialRoadMap(LightningModule):
             return loss, loss_classifier, loss_box_reg, loss_objectness, loss_rpn_box_reg
         else:
             # in val, the output is a dic of boxes and losses
-            # TODO: get boxes - transform corner coordinates -> 4 coordinates for original plot function
+            import pdb; pdb.set_trace()
             loss = []
             for d in losses:
                 loss.append(d['scores'])
@@ -133,8 +133,7 @@ class BBSpatialRoadMap(LightningModule):
                 predicted_coords_0 = losses[0]['boxes']
                 # transform [N, 4] -> [N, 2, 4]
                 predicted_coords_0 = self._change_to_old_coord_sys(predicted_coords_0)
-                # [N]
-                pred_categories_0 = losses[0]['labels']
+                pred_categories_0 = losses[0]['labels'] # [N]
 
                 target_coords_0 = target[0]['boxes']
                 target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
