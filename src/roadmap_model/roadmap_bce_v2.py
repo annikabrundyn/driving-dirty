@@ -206,7 +206,7 @@ class RoadMapBCE(LightningModule):
 
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
-        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=True)
         #parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=True)
 
         parser.add_argument('--batch_size', type=int, default=16)
