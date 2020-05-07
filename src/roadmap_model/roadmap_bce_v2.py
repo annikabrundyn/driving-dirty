@@ -125,7 +125,7 @@ class RoadMapBCE(LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        if self.current_epoch >= 30 and self.frozen:
+        if self.current_epoch >= self.hparams.unfreeze_epoch_no and self.frozen:
             self.frozen=False
             self.ae.unfreeze()
 
@@ -207,13 +207,14 @@ class RoadMapBCE(LightningModule):
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
         parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=True)
+        parser.opt_list('--unfreeze_epoch_no', type=int, default=20, options=[0, 20], tunable=True)
         #parser.opt_list('--loss_fn', type=str, default='mse', options=['mse', 'bce'], tunable=True)
 
         parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
        #parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/dd_pretrain_ae/lightning_logs/version_9234267/checkpoints/epoch=42.ckpt')
-        parser.add_argument('--pretrained_path', type=str, default='//scratch/ab8690/logs/space_bb_pretrain/lightning_logs/version_9604234/checkpoints/epoch=23.ckpt')
+        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/space_bb_pretrain/lightning_logs/version_9604234/checkpoints/epoch=23.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=500)
         return parser
 

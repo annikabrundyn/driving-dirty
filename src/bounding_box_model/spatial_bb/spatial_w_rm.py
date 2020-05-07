@@ -220,7 +220,7 @@ class BBSpatialRoadMap(LightningModule):
         parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
-        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/dd_pretrain_ae/lightning_logs/version_9234267/checkpoints/epoch=42.ckpt')
+        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/space_bb_pretrain/lightning_logs/version_9604234/checkpoints/epoch=23.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=500)
         parser.add_argument('--unfreeze_epoch_no', type=int, default=0)
 
