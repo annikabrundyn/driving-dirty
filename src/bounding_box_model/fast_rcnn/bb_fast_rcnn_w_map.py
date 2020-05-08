@@ -45,8 +45,8 @@ class Backbone(nn.Module):
 
         # self sup reps
         ssr = self.ae(x)
+        ssr = F.sigmoid(ssr)
         return ssr
-
 
 
 class FasterRCNNRoadMap(LightningModule):
