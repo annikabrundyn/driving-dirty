@@ -218,6 +218,7 @@ class FasterRCNNRoadMap(LightningModule):
     def  _old_to_new_coord(self, input_boxes):
 
         boxes = input_boxes.clone()
+        import pdb; pdb.set_trace()
         # rescale coordinate system from (-40, 40)x(-40,40) --> (0, 800)x(800, 0)
         boxes[:,0] = (boxes[:,0] * 10) + 400
         boxes[:, 1] = (boxes[:, 1] * -10) + 400
@@ -230,10 +231,6 @@ class FasterRCNNRoadMap(LightningModule):
 
         # output dim: [N, 4] where each box has [x1, x2, x3, x4]
 #        coords = torch.stack([min_x, max_y, max_x, min_y], dim=1)
-        min_x[:] = 20
-        max_y[:] = 20
-        max_x[:] = 10
-        min_y[:] = 10
         coords = torch.stack([min_x, max_y, max_x, min_y], dim=1)
 
         return coords
