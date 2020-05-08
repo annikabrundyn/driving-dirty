@@ -91,20 +91,22 @@ class BBSpatialRoadMap(LightningModule):
         return losses_dict
 
     def _run_step(self, batch, batch_idx, step_name):
-        # images, target and roadimage are tuples
-        images, target, road_image = batch
+        # images, target and roadimage are tuples of length batchsize
+        # bb coords in target using (-40, 40) scale
+        images, raw_target, road_image = batch
 
         # 6 images to 1 long one
+        # tuple([b, 6, 3, 256, 306]) -> [b, 3, 800, 800]
         square_images = helper.layout_images_as_map(images)
 
         # adjust format for FastRCNN
-        images, target = self._format_for_fastrcnn(square_images, target)
+        # images: list([3, 800, 800]); target: list( {'boxes': [N, 4], 'labels': [N] } )
+        # here bb coords are already transformed to (0, 800) range
+        images, target = self._format_for_fastrcnn(square_images, raw_target)
 
-        # aggregate losses
+        # run a forward step
+        # depending on whether its a train or validation step - losses is dict with different keys
         losses = self(images, target)
-
-        # log images
-        #if batch_idx % self.hparams.output_img_freq == 0:
 
         # in training, the output is a dict of scalars
         if step_name == 'train':
@@ -116,26 +118,22 @@ class BBSpatialRoadMap(LightningModule):
             return loss, loss_classifier, loss_box_reg, loss_objectness, loss_rpn_box_reg
         else:
             # in val, the output is a dic of boxes and losses
-            #import pdb; pdb.set_trace()
-            #loss = []
-            #for d in losses:
-            #    loss.append(d['scores'].view(-1))
-            #loss = torch.cat(loss).mean()
-
             # ----------------------
             # LOG VALIDATION IMAGES
             # ----------------------
             if batch_idx % self.hparams.output_img_freq == 0:
                 ### --- log one validation predicted image ---
-                # [N, 4]
+                # [N, 4] - seems to be [100,4]
                 predicted_coords_0 = losses[0]['boxes']
                 # transform [N, 4] -> [N, 2, 4]
+                # note these predictions are on [0, 800] scale
                 predicted_coords_0 = self._change_to_old_coord_sys(predicted_coords_0)
                 pred_categories_0 = losses[0]['labels'] # [N]
 
-                target_coords_0 = target[0]['boxes']
-                target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
-                target_categories_0 = target[0]['labels']
+                target_coords_0 = raw_target[0]['bounding_box']*10 + 400
+                # [N, 4] -> [N, 2, 4]
+                #target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
+                target_categories_0 = raw_target[0]['category']
 
                 log_fast_rcnn_images(self, images[0], predicted_coords_0, pred_categories_0,
                                      target_coords_0, target_categories_0,
