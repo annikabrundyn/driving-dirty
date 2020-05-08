@@ -45,7 +45,6 @@ class Backbone(nn.Module):
 
         # self sup reps
         ssr = self.ae(x)
-        ssr = F.sigmoid(ssr)
         return ssr
 
 
@@ -240,6 +239,7 @@ class FasterRCNNRoadMap(LightningModule):
         for image, road_img in zip(images, road_image):
             image = torch.cat([image, road_img.unsqueeze(0)], dim=0).float()
             image = self.mapper_cnn(image.unsqueeze(0)).squeeze(0)
+            image = F.sigmoid(image)
             new_images.append(image)
 
         target = [{k: v for k, v in t.items()} for t in target]
