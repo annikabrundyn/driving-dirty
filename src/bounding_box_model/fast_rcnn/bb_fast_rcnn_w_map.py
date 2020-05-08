@@ -30,10 +30,10 @@ torch.manual_seed(20200505)
 
 class Backbone(nn.Module):
 
-    def __init__(self, hparams2):
+    def __init__(self, hparams):
         super().__init__()
 
-        self.ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
+        self.ae = BasicAE.load_from_checkpoint(hparams.pretrained_path)
         # self.ae = BasicAE(hparams2)
         self.ae.freeze()
         self.ae = self.ae.encoder
@@ -70,7 +70,7 @@ class BBSpatialRoadMap(LightningModule):
         self.mapper_cnn = torch.nn.Conv2d(4, 3, padding=1, kernel_size=3)
 
         #self.backbone = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
-        self.backbone = Backbone(hparams2)
+        self.backbone = Backbone(hparams)
         self.backbone.out_channels = 32
 
         # ------------------
