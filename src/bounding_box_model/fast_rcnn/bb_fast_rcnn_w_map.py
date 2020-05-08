@@ -182,7 +182,9 @@ class FasterRCNNRoadMap(LightningModule):
 
             # return avg_bb_ts, None, None, None, None
 
-    def _new_to_old_coord(self, boxes):
+    def _new_to_old_coord(self, input_boxes):
+
+        boxes = input_boxes.clone()
         # boxes dim: [N, 4]
         # scale down coords to (-40,40) coord sys
         boxes[:, [0,2]] = (boxes[:, [0,2]] - 400) / 10
@@ -192,10 +194,6 @@ class FasterRCNNRoadMap(LightningModule):
         y_0 = boxes[:, 1]
         x_1 = boxes[:, 2]
         y_1 = boxes[:, 3]
-        #x_min = (boxes[:, 0] - 400) / 10
-        #y_min = (boxes[:, 1] - 400) / -10
-        #x_max = (boxes[:, 2] - 400) / 10
-        #y_max = (boxes[:, 3] - 400) / -10
 
         # change to previous 8 coord system
         fl_x = x_1
@@ -217,8 +215,9 @@ class FasterRCNNRoadMap(LightningModule):
         # old_coords: [N, 2, 4]
         return old_coords
 
-    def  _old_to_new_coord(self, boxes):
+    def  _old_to_new_coord(self, input_boxes):
 
+        boxes = input_boxes.clone()
         # rescale coordinate system from (-40, 40)x(-40,40) --> (0, 800)x(800, 0)
         boxes[:,0] = (boxes[:,0] * 10) + 400
         boxes[:, 1] = (boxes[:, 1] * -10) + 400
