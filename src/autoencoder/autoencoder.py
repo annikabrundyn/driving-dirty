@@ -10,7 +10,7 @@ from test_tube import HyperOptArgumentParser
 import numpy as np
 import random
 
-from src.autoencoder.components_v2 import Encoder, Decoder #here's the diff. 
+from src.autoencoder.components import Encoder, Decoder #here's the diff.
 from src.utils.data_helper import UnlabeledDataset
 
 random.seed(20200505)
