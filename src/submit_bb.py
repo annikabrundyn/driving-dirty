@@ -59,7 +59,7 @@ def run_on_cluster(hyperparams):
     cluster.add_command(f'source activate {hyperparams.conda_env}')
     # pick the gpu resources
     cluster.per_experiment_nb_gpus = hyperparams.gpus
-    cluster.per_experiment_nb_cpus = 1
+    cluster.per_experiment_nb_cpus = 10
     cluster.per_experiment_nb_nodes = 1
     cluster.gpu_type = 'k80'
     # cluster.job_time = '20:00:00'
