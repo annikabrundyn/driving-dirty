@@ -21,6 +21,8 @@ from src.bounding_box_model.spatial_bb.components import SpatialMappingCNN, Road
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 
+torch.autograd.set_detect_anomaly(True)
+
 import matplotlib.pyplot as plt
 
 random.seed(20200505)
