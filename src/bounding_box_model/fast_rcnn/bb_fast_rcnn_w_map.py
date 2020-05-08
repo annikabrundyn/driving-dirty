@@ -135,6 +135,7 @@ class FasterRCNNRoadMap(LightningModule):
 
         # in val, the output is a dic of boxes and losses
         else:
+            avg_bb_ts = 0
             if 0 < batch_idx < 5:
                 # we want to calculate validation performance
                 avg_bb_ts = []
