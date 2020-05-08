@@ -158,12 +158,16 @@ class FasterRCNNRoadMap(LightningModule):
             if batch_idx % self.hparams.output_img_freq == 0:
                 ### --- log one validation predicted image ---
                 # [N, 4]
+                # range: (0, 800)
                 predicted_coords_0 = losses[0]['boxes']
+
+                # TODO: is this correct?
                 # transform [N, 4] -> [N, 2, 4]
                 predicted_coords_0 = self._change_to_old_coord_sys(predicted_coords_0)
                 pred_categories_0 = losses[0]['labels'] # [N]
 
-                target_coords_0 = raw_target[0]['bounding_box']*10 + 400
+                target_coords_0 = raw_target[0]['bounding_box']
+
                 #target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
                 target_categories_0 = raw_target[0]['category']
 
@@ -176,10 +180,11 @@ class FasterRCNNRoadMap(LightningModule):
 
     def _change_to_old_coord_sys(self, boxes):
         # boxes dim: [N, 4]
-        x_1 = x_3 = boxes[:, 0]
-        y_1 = y_4 = boxes[:, 1]
-        x_2 = x_4 = boxes[:, 2]
-        y_2 = y_3 = boxes[:, 3]
+        # scale down coords to (-40,40) coord sys
+        x_1 = x_3 = (boxes[:, 0] - 400) / 10
+        y_1 = y_4 = (boxes[:, 1] - 400) / -10
+        x_2 = x_4 = (boxes[:, 2] - 400) / 10
+        y_2 = y_3 = (boxes[:, 3] - 400) / -10
 
         x_coords = torch.stack([x_1, x_2, x_3, x_4], dim=1)
         y_coords = torch.stack([y_1, y_2, y_3, y_4], dim=1)
@@ -188,14 +193,22 @@ class FasterRCNNRoadMap(LightningModule):
         # old_coords: [N, 2, 4]
         return old_coords
 
-    def _change_coord_sys(self, boxes):
+    def  _change_coord_sys(self, boxes):
 
-        boxes = boxes * 10 + 400
         # boxes dim: [N, 2, 4]
         max_x = boxes[:, 0].max(dim=1)[0]
         min_x = boxes[:, 0].min(dim=1)[0]
         max_y = boxes[:, 1].max(dim=1)[0]
         min_y = boxes[:, 1].min(dim=1)[0]
+
+        # scale coordinates
+        # x' = x*10 + 400
+        # y' = -y*10 + 400
+        max_x = max_x*10 + 400
+        min_x = min_x*10 + 400
+
+        max_y = -(max_y)*10 + 400
+        min_y = -(min_y)*10 + 400
 
         # output dim: [N, 4] where each box has [x1, x2, x3, x4]
         coords = torch.stack([min_x, min_y, max_x, max_y], dim=1)
