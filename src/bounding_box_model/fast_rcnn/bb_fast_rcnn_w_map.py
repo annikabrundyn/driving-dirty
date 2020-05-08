@@ -47,7 +47,7 @@ class Backbone(nn.Module):
 
 
 
-class BBSpatialRoadMap(LightningModule):
+class FasterRCNNRoadMap(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
@@ -291,12 +291,12 @@ class BBSpatialRoadMap(LightningModule):
 
         # want to optimize this parameter
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
-        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=False)
-        parser.add_argument('--batch_size', type=int, default=16)
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=True)
+        parser.add_argument('--batch_size', type=int, default=10)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/space_bb_pretrain/lightning_logs/version_9604234/checkpoints/epoch=23.ckpt')
-        parser.add_argument('--output_img_freq', type=int, default=5)
+        parser.add_argument('--output_img_freq', type=int, default=100)
         parser.add_argument('--unfreeze_epoch_no', type=int, default=0)
 
         parser.add_argument('--mse_loss', default=False, action='store_true')
@@ -306,9 +306,9 @@ class BBSpatialRoadMap(LightningModule):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    parser = BBSpatialRoadMap.add_model_specific_args(parser)
+    parser = FasterRCNNRoadMap.add_model_specific_args(parser)
     args = parser.parse_args()
 
-    model = BBSpatialRoadMap(args)
+    model = FasterRCNNRoadMap(args)
     trainer = Trainer.from_argparse_args(args)
     trainer.fit(model)
