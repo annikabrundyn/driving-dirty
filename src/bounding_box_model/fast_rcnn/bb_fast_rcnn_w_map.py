@@ -144,7 +144,7 @@ class FasterRCNNRoadMap(LightningModule):
                 ats = compute_ats_bounding_boxes(pred_bb, true_bb)
                 avg_bb_ts.append(ats)
 
-            avg_bb_ts = torch.cat(avg_bb_ts).mean()
+            avg_bb_ts = torch.mean(torch.stack(avg_bb_ts))
             # ----------------------
             # LOG VALIDATION IMAGES
             # ----------------------
