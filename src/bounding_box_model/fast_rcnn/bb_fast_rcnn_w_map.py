@@ -143,6 +143,7 @@ class FasterRCNNRoadMap(LightningModule):
                true_bb = raw_target[i]['bounding_box']
                ats = compute_ts_road_map(pred_bb, true_bb)
                avg_bb_ts.append(ats)
+
             avg_bb_ts = avg_bb_ts.mean()
 
             # ----------------------
