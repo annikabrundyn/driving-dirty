@@ -79,7 +79,7 @@ class BBSpatialRoadMap(LightningModule):
         # ------------------
         # PRE-TRAINED MODEL
         # ------------------
-        self.mapper_cnn = torch.nn.Conv2d(4, 3, padding=2, kernel_size=3)
+        self.mapper_cnn = torch.nn.Conv2d(4, 3, padding=1, kernel_size=3)
 
         #self.backbone = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
         self.backbone = Backbone(hparams2)
@@ -207,7 +207,6 @@ class BBSpatialRoadMap(LightningModule):
         new_images = []
         for image, road_img in zip(images, road_image):
             image = torch.cat([image, road_img.unsqueeze(0)], dim=0).float()
-            import pdb; pdb.set_trace()
             image = self.mapper_cnn(image)
             new_images.append(image)
 
