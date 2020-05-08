@@ -48,8 +48,8 @@ class BBSpatialRoadMap(LightningModule):
         # ------------------
         # PRE-TRAINED MODEL
         # ------------------
-        #self.backbone = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
-        ae = BasicAE(hparams2)
+        ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
+        # ae = BasicAE(hparams2)
         ae.freeze()
         self.backbone = ae.encoder
         self.backbone.c3_only = True
