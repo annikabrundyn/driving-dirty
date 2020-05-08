@@ -121,8 +121,8 @@ class FasterRCNNRoadMap(LightningModule):
         images, target = self._format_for_fastrcnn(images, raw_target, road_image)
 
         # aggregate losses
-        if step_name == 'train':
-            import pdb; pdb.set_trace()
+        #if step_name == 'train':
+        #    import pdb; pdb.set_trace()
         losses = self(images, target)
 
         # log images
