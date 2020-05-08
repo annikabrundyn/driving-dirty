@@ -336,7 +336,7 @@ class FasterRCNNRoadMap(LightningModule):
         #parser.opt_list('--batch_size', type=int, default=16, options=[16, 10, 8], tunable=False)
         parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4], tunable=True)
         parser.opt_list('--batch_size', type=int, default=4, options=[4, 6], tunable=True)
-        parser.opt_list('--unfreeze_epoch_no', type=int, default=0, options=[0, 10], tunable=True)
+        parser.opt_list('--unfreeze_epoch_no', type=int, default=10, options=[0, 10], tunable=True)
         #parser.add_argument('--batch_size', type=int, default=4)
 
         # fixed arguments
