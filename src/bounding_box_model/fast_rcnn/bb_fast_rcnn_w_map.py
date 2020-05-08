@@ -167,7 +167,7 @@ class FasterRCNNRoadMap(LightningModule):
 
                 # TODO: is this correct?
                 # transform [N, 4] -> [N, 2, 4]
-                predicted_coords_0 = self._change_to_old_coord_sys(predicted_coords_0)
+                predicted_coords_0 = self._new_to_old_coord(predicted_coords_0)
                 pred_categories_0 = losses[0]['labels'] # [N]
 
                 target_coords_0 = raw_target[0]['bounding_box']
@@ -182,26 +182,33 @@ class FasterRCNNRoadMap(LightningModule):
 
             # return avg_bb_ts, None, None, None, None
 
-    def _change_to_old_coord_sys(self, boxes):
+    def _new_to_old_coord(self, boxes):
         # boxes dim: [N, 4]
         # scale down coords to (-40,40) coord sys
-        x_min = (boxes[:, 0] - 400) / 10
-        y_min = (boxes[:, 1] - 400) / -10
-        x_max = (boxes[:, 2] - 400) / 10
-        y_max = (boxes[:, 3] - 400) / -10
+        boxes[:, [0,2]] = (boxes[:, [0,2]] - 400) / 10
+        boxes[:, [1, 3]] = (boxes[:, [1, 3]] - 400) / -10
+
+        x_0 = boxes[:, 0]
+        y_0 = boxes[:, 1]
+        x_1 = boxes[:, 2]
+        y_1 = boxes[:, 3]
+        #x_min = (boxes[:, 0] - 400) / 10
+        #y_min = (boxes[:, 1] - 400) / -10
+        #x_max = (boxes[:, 2] - 400) / 10
+        #y_max = (boxes[:, 3] - 400) / -10
 
         # change to previous 8 coord system
-        fl_x = x_max
-        fl_y = y_max
+        fl_x = x_1
+        fl_y = y_1
 
-        fr_x = x_max
-        fr_y = y_min
+        fr_x = x_1
+        fr_y = y_0
 
-        bl_x = x_min
-        bl_y = y_max
+        bl_x = x_0
+        bl_y = y_1
 
-        br_x = x_min
-        br_y = y_min
+        br_x = x_0
+        br_y = y_0
 
         x_coords = torch.stack([fl_x, fr_x, bl_x, br_x], dim=1)
         y_coords = torch.stack([fl_y, fr_y, bl_y, br_y], dim=1)
@@ -210,9 +217,9 @@ class FasterRCNNRoadMap(LightningModule):
         # old_coords: [N, 2, 4]
         return old_coords
 
-    def  _change_coord_sys(self, boxes):
+    def  _old_to_new_coord(self, boxes):
 
-        # change coord system
+        # rescale coordinate system from (-40, 40)x(-40,40) --> (0, 800)x(800, 0)
         boxes[:,0] = boxes[:,0]*10 + 400
         boxes[:, 1] = (boxes[:, 1] * -10) + 400
 
@@ -222,16 +229,8 @@ class FasterRCNNRoadMap(LightningModule):
         max_y = boxes[:, 1].max(dim=1)[0]
         min_y = boxes[:, 1].min(dim=1)[0]
 
-        # scale coordinates
-        # x' = x*10 + 400
-        # y' = -y*10 + 400
-        #max_x = max_x*10 + 400
-        #min_x = min_x*10 + 400
-        #max_y = -(max_y)*10 + 400
-        #min_y = -(min_y)*10 + 400
-
         # output dim: [N, 4] where each box has [x1, x2, x3, x4]
-        coords = torch.stack([min_x, min_y, max_x, max_y], dim=1)
+        coords = torch.stack([min_x, max_y, max_x, min_y], dim=1)
         return coords
 
     def _format_for_fastrcnn(self, images, target, road_image):
@@ -250,7 +249,7 @@ class FasterRCNNRoadMap(LightningModule):
 
             # Change coords to (x0, y0, x1, y1) ie top left and bottom right corners
             # TODO: verify
-            d['boxes'] = self._change_coord_sys(d['boxes']).float()
+            d['boxes'] = self._old_to_new_coord(d['boxes']).float()
             #num_boxes = d['boxes'].size(0)
             #d['boxes'] = d['boxes'][:, :, [0, -1]].reshape(num_boxes, -1).float()
 
