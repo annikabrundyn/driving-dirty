@@ -113,10 +113,10 @@ class FasterRCNNRoadMap(LightningModule):
         images, raw_target, road_image = batch
 
         # 6 images to 1 long one
-        square_images = helper.layout_images_as_map(images)
+        images = helper.layout_images_as_map(images)
 
         # adjust format for FastRCNN
-        images, target = self._format_for_fastrcnn(square_images, raw_target, road_image)
+        images, target = self._format_for_fastrcnn(images, raw_target, road_image)
 
         # aggregate losses
         losses = self(images, target)
@@ -163,7 +163,7 @@ class FasterRCNNRoadMap(LightningModule):
                 predicted_coords_0 = self._change_to_old_coord_sys(predicted_coords_0)
                 pred_categories_0 = losses[0]['labels'] # [N]
 
-                target_coords_0 = raw_target[0]['bounding_box']
+                target_coords_0 = raw_target[0]['bounding_box']*10 + 400
                 #target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
                 target_categories_0 = raw_target[0]['category']
 
@@ -181,8 +181,8 @@ class FasterRCNNRoadMap(LightningModule):
         x_2 = x_4 = boxes[:, 2]
         y_2 = y_3 = boxes[:, 3]
 
-        x_coords = torch.stack([x_2, x_4, x_1, x_3], dim=1)
-        y_coords = torch.stack([y_2, y_4, y_1, y_3], dim=1)
+        x_coords = torch.stack([x_1, x_2, x_3, x_4], dim=1)
+        y_coords = torch.stack([y_1, y_2, y_3, y_4], dim=1)
         old_coords = torch.stack([x_coords, y_coords], dim=1)
 
         # old_coords: [N, 2, 4]
