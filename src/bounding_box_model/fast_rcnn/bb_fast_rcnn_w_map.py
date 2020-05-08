@@ -245,7 +245,11 @@ class FasterRCNNRoadMap(LightningModule):
         return {'val_ts': avg_bb_ts}
 
     def validation_epoch_end(self, outputs):
-        avg_val_bb_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+        try:
+            avg_val_bb_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+        except Exception as e:
+            avg_val_bb_ts = torch.tensor(0)
+
         val_tensorboard_logs = {'avg_val_bb_ts': avg_val_bb_ts}
         return {'log': val_tensorboard_logs}
 
