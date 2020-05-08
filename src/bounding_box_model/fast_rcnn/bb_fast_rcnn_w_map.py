@@ -230,10 +230,10 @@ class FasterRCNNRoadMap(LightningModule):
 
         # output dim: [N, 4] where each box has [x1, x2, x3, x4]
 #        coords = torch.stack([min_x, max_y, max_x, min_y], dim=1)
-        min_x[:] = 0
-        max_y[:] = 0
-        max_x[:] = 0
-        min_y[:] = 0
+        min_x[:] = 10
+        max_y[:] = 10
+        max_x[:] = 20
+        min_y[:] = 20
         coords = torch.stack([min_x, max_y, max_x, min_y], dim=1)
 
         return coords
