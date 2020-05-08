@@ -110,13 +110,13 @@ class FasterRCNNRoadMap(LightningModule):
 
     def _run_step(self, batch, batch_idx, step_name):
         # images, target and roadimage are tuples
-        images, target, road_image = batch
+        images, raw_target, road_image = batch
 
         # 6 images to 1 long one
         square_images = helper.layout_images_as_map(images)
 
         # adjust format for FastRCNN
-        images, target = self._format_for_fastrcnn(square_images, target, road_image)
+        images, target = self._format_for_fastrcnn(square_images, raw_target, road_image)
 
         # aggregate losses
         losses = self(images, target)
@@ -132,13 +132,18 @@ class FasterRCNNRoadMap(LightningModule):
             loss_rpn_box_reg = losses['loss_rpn_box_reg'].double()
             loss = loss_classifier + loss_box_reg + loss_objectness + loss_rpn_box_reg
             return loss, loss_classifier, loss_box_reg, loss_objectness, loss_rpn_box_reg
+
+        # in val, the output is a dic of boxes and losses
         else:
-            # in val, the output is a dic of boxes and losses
-            #import pdb; pdb.set_trace()
-            #loss = []
-            #for d in losses:
-            #    loss.append(d['scores'].view(-1))
-            #loss = torch.cat(loss).mean()
+           # we want to calculate validation performance
+           avg_bb_ts = []
+           for i, d in enumerate(losses):
+               pred_bb = d['boxes']
+               pred_bb = self._change_to_old_coord_sys(pred_bb)
+               true_bb = raw_target[i]['bounding_box']
+               ats = compute_ts_road_map(pred_bb, true_bb)
+               avg_bb_ts.append(ats)
+            avg_bb_ts = avg_bb_ts.mean()
 
             # ----------------------
             # LOG VALIDATION IMAGES
@@ -151,16 +156,16 @@ class FasterRCNNRoadMap(LightningModule):
                 predicted_coords_0 = self._change_to_old_coord_sys(predicted_coords_0)
                 pred_categories_0 = losses[0]['labels'] # [N]
 
-                target_coords_0 = target[0]['boxes']
-                target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
-                target_categories_0 = target[0]['labels']
+                target_coords_0 = raw_target[0]['bounding_box']
+                #target_coords_0 = self._change_to_old_coord_sys(target_coords_0)
+                target_categories_0 = raw_target[0]['category']
 
                 log_fast_rcnn_images(self, images[0], predicted_coords_0, pred_categories_0,
                                      target_coords_0, target_categories_0,
                                      road_image[0],
                                      step_name)
 
-            #return loss, None, None, None, None
+            return avg_bb_ts, None, None, None, None
 
     def _change_to_old_coord_sys(self, boxes):
         # boxes dim: [N, 4]
@@ -229,13 +234,13 @@ class FasterRCNNRoadMap(LightningModule):
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        self._run_step(batch, batch_idx, step_name='valid')
-        #return {'val_loss': val_loss}
+        avg_bb_ts, _, _, _, _ = self._run_step(batch, batch_idx, step_name='valid')
+        return {'val_ts': avg_bb_ts}
 
-    #def validation_epoch_end(self, outputs):
-        #avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        #val_tensorboard_logs = {'avg_val_loss': avg_val_loss}
-        #return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
+    def validation_epoch_end(self, outputs):
+        avg_val_bb_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+        val_tensorboard_logs = {'avg_val_bb_ts': avg_val_bb_ts}
+        return {'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
@@ -296,7 +301,7 @@ class FasterRCNNRoadMap(LightningModule):
         # fixed arguments
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/space_bb_pretrain/lightning_logs/version_9604234/checkpoints/epoch=23.ckpt')
-        parser.add_argument('--output_img_freq', type=int, default=100)
+        parser.add_argument('--output_img_freq', type=int, default=1)
         parser.add_argument('--unfreeze_epoch_no', type=int, default=0)
 
         parser.add_argument('--mse_loss', default=False, action='store_true')
