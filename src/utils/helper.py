@@ -34,7 +34,7 @@ def layout_images_as_map(sample):
     fr = sample[:, 2, ...]
     fr = torch.rot90(fr, 2, [2, 3])
 
-    white = torch.ones(fr.size(0), 3, 306, 100)
+    white = torch.ones(fr.size(0), 3, 306, 100).type_as(fr)
 
     top = torch.cat([br, fl], dim=-1)
     mid = torch.cat([b, white, f], dim=-1)
