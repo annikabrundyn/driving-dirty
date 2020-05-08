@@ -135,22 +135,22 @@ class FasterRCNNRoadMap(LightningModule):
 
         # in val, the output is a dic of boxes and losses
         else:
-            avg_bb_ts = 0
-            if 0 < batch_idx < 5:
-                # we want to calculate validation performance
-                avg_bb_ts = []
-                for i, d in enumerate(losses):
-                    try:
-                        pred_bb = d['boxes']
-                        pred_bb = self._change_to_old_coord_sys(pred_bb)
-                        true_bb = raw_target[i]['bounding_box']
-                        ats = compute_ats_bounding_boxes(pred_bb, true_bb)
-                        avg_bb_ts.append(ats)
-
-                    except Exception as e:
-                        pass
-
-                avg_bb_ts = torch.mean(torch.stack(avg_bb_ts))
+            # avg_bb_ts = 0
+            # if 0 < batch_idx < 5:
+            #     # we want to calculate validation performance
+            #     avg_bb_ts = []
+            #     for i, d in enumerate(losses):
+            #         try:
+            #             pred_bb = d['boxes']
+            #             pred_bb = self._change_to_old_coord_sys(pred_bb)
+            #             true_bb = raw_target[i]['bounding_box']
+            #             ats = compute_ats_bounding_boxes(pred_bb, true_bb)
+            #             avg_bb_ts.append(ats)
+            #
+            #         except Exception as e:
+            #             pass
+            #
+            #     avg_bb_ts = torch.mean(torch.stack(avg_bb_ts))
 
             # ----------------------
             # LOG VALIDATION IMAGES
@@ -172,7 +172,7 @@ class FasterRCNNRoadMap(LightningModule):
                                      road_image[0],
                                      step_name)
 
-            return avg_bb_ts, None, None, None, None
+            # return avg_bb_ts, None, None, None, None
 
     def _change_to_old_coord_sys(self, boxes):
         # boxes dim: [N, 4]
@@ -241,17 +241,18 @@ class FasterRCNNRoadMap(LightningModule):
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        avg_bb_ts, _, _, _, _ = self._run_step(batch, batch_idx, step_name='valid')
-        return {'val_ts': avg_bb_ts}
+        self._run_step(batch, batch_idx, step_name='valid')
+        #avg_bb_ts, _, _, _, _ = self._run_step(batch, batch_idx, step_name='valid')
+        #return {'val_ts': avg_bb_ts}
 
-    def validation_epoch_end(self, outputs):
-        try:
-            avg_val_bb_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
-        except Exception as e:
-            avg_val_bb_ts = torch.tensor(0)
-
-        val_tensorboard_logs = {'avg_val_bb_ts': avg_val_bb_ts}
-        return {'log': val_tensorboard_logs}
+    #def validation_epoch_end(self, outputs):
+    #    try:
+    #        avg_val_bb_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+    #    except Exception as e:
+    #        avg_val_bb_ts = torch.tensor(0)
+    #
+    #    val_tensorboard_logs = {'avg_val_bb_ts': avg_val_bb_ts}
+    #    return {'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
