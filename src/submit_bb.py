@@ -22,6 +22,7 @@ MODEL_NAMES = {
     'roadmap_bce': RoadMapBCE,
     'spatial_rm': BBSpatialRoadMap,
     'faster_rcnn': BBFasterRCNN,
+    'faster_rcnn_rm': FasterRCNNRoadMap
 }
 
 def main_local(hparams):
