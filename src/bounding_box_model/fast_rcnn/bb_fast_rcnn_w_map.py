@@ -199,14 +199,8 @@ class FasterRCNNRoadMap(LightningModule):
         br_x = x_min
         br_y = y_min
 
-
-        #x_1 = x_3 = (boxes[:, 0] - 400) / 10
-        #y_1 = y_4 = (boxes[:, 1] - 400) / -10
-        #x_2 = x_4 = (boxes[:, 2] - 400) / 10
-        #y_2 = y_3 = (boxes[:, 3] - 400) / -10
-
         x_coords = torch.stack([fl_x, fr_x, bl_x, br_x], dim=1)
-        y_coords = torch.stack([fl_x, fr_y, bl_y, br_y], dim=1)
+        y_coords = torch.stack([fl_y, fr_y, bl_y, br_y], dim=1)
         old_coords = torch.stack([x_coords, y_coords], dim=1)
 
         # old_coords: [N, 2, 4]
