@@ -181,13 +181,32 @@ class FasterRCNNRoadMap(LightningModule):
     def _change_to_old_coord_sys(self, boxes):
         # boxes dim: [N, 4]
         # scale down coords to (-40,40) coord sys
-        x_1 = x_3 = (boxes[:, 0] - 400) / 10
-        y_1 = y_4 = (boxes[:, 1] - 400) / -10
-        x_2 = x_4 = (boxes[:, 2] - 400) / 10
-        y_2 = y_3 = (boxes[:, 3] - 400) / -10
+        x_min = (boxes[:, 0] - 400) / 10
+        y_min = (boxes[:, 1] - 400) / -10
+        x_max = (boxes[:, 2] - 400) / 10
+        y_max = (boxes[:, 3] - 400) / -10
 
-        x_coords = torch.stack([x_1, x_2, x_3, x_4], dim=1)
-        y_coords = torch.stack([y_1, y_2, y_3, y_4], dim=1)
+        # change to previous 8 coord system
+        fl_x = x_max
+        fl_y = y_max
+
+        fr_x = x_max
+        fr_y = y_min
+
+        bl_x = x_min
+        bl_y = y_max
+
+        br_x = x_min
+        br_y = y_min
+
+
+        #x_1 = x_3 = (boxes[:, 0] - 400) / 10
+        #y_1 = y_4 = (boxes[:, 1] - 400) / -10
+        #x_2 = x_4 = (boxes[:, 2] - 400) / 10
+        #y_2 = y_3 = (boxes[:, 3] - 400) / -10
+
+        x_coords = torch.stack([fl_x, fr_x, bl_x, br_x], dim=1)
+        y_coords = torch.stack([fl_x, fr_y, bl_y, br_y], dim=1)
         old_coords = torch.stack([x_coords, y_coords], dim=1)
 
         # old_coords: [N, 2, 4]
