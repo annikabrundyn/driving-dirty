@@ -33,12 +33,11 @@ class Backbone(nn.Module):
     def __init__(self, hparams2):
         super().__init__()
 
-        # self.ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
-        self.ae = BasicAE(hparams2)
+        self.ae = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
+        # self.ae = BasicAE(hparams2)
         self.ae.freeze()
         self.ae = self.ae.encoder
         self.ae.c3_only = True
-
 
     def forward(self, x):
 
@@ -72,7 +71,7 @@ class BBSpatialRoadMap(LightningModule):
 
         #self.backbone = BasicAE.load_from_checkpoint(self.hparams.pretrained_path)
         self.backbone = Backbone(hparams2)
-        self.backbone.out_channels = 64
+        self.backbone.out_channels = 32
 
         # ------------------
         # FAST RCNN
