@@ -121,8 +121,8 @@ class FasterRCNNRoadMap(LightningModule):
         images, target = self._format_for_fastrcnn(images, raw_target, road_image)
 
         # aggregate losses
-        #if step_name == 'train':
-        #    import pdb; pdb.set_trace()
+        if step_name == 'train':
+            import pdb; pdb.set_trace()
         losses = self(images, target)
 
         # log images
@@ -187,6 +187,7 @@ class FasterRCNNRoadMap(LightningModule):
         boxes = input_boxes.clone()
         # boxes dim: [N, 4]
         # scale down coords to (-40,40) coord sys
+        #boxes[:, 0] =
         boxes[:, [0,2]] = (boxes[:, [0,2]] - 400) / 10
         boxes[:, [1, 3]] = (boxes[:, [1, 3]] - 400) / -10
 
