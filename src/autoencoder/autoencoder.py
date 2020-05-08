@@ -10,7 +10,7 @@ from test_tube import HyperOptArgumentParser
 import numpy as np
 import random
 
-from src.autoencoder.components import Encoder, Decoder
+from src.autoencoder.components_v2 import Encoder, Decoder #here's the diff. 
 from src.utils.data_helper import UnlabeledDataset
 
 random.seed(20200505)
@@ -178,6 +178,7 @@ class BasicAE(LightningModule):
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         #parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         parser.add_argument('--output_img_freq', type=int, default=500)
+        
         return parser
 
 
