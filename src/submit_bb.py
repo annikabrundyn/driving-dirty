@@ -10,7 +10,7 @@ from src.roadmap_model.roadmap_bce_v2 import RoadMapBCE
 from src.bounding_box_model.bb_coord_reg.bb_MLP import Boxes
 from src.bounding_box_model.spatial_bb.spatial_model import BBSpatialModel
 from src.bounding_box_model.spatial_bb.spatial_w_rm import BBSpatialRoadMap
-from src.bounding_box_model.fast_rcnn.bb_fast_rcnn import FasterRCNN
+from src.bounding_box_model.fast_rcnn.bb_fast_rcnn import BBFasterRCNN
 from src.bounding_box_model.fast_rcnn.bb_fast_rcnn_w_map import FasterRCNNRoadMap
 
 from test_tube import HyperOptArgumentParser, SlurmCluster
@@ -23,7 +23,7 @@ MODEL_NAMES = {
     'bb_reg': Boxes,
     'spatial_bb': BBSpatialModel,
     'spatial_rm': BBSpatialRoadMap,
-    'faster_rcnn': FasterRCNN,
+    'faster_rcnn': BBFasterRCNN,
     'faster_rcnn_rm': FasterRCNNRoadMap
 }
 

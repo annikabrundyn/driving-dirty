@@ -28,7 +28,7 @@ np.random.seed(20200505)
 torch.manual_seed(20200505)
 
 
-class FasterRCNN(LightningModule):
+class BBFasterRCNN(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
@@ -282,9 +282,9 @@ class FasterRCNN(LightningModule):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    parser = FasterRCNN.add_model_specific_args(parser)
+    parser = BBFasterRCNN.add_model_specific_args(parser)
     args = parser.parse_args()
 
-    model = FasterRCNN(args)
+    model = BBFasterRCNN(args)
     trainer = Trainer.from_argparse_args(args)
     trainer.fit(model)
