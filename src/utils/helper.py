@@ -63,7 +63,7 @@ def log_fast_rcnn_images(self, x, pred_coords, pred_categ, target_coords, target
 def plot_all_colour_boxes(coords, categories, rm):
     fig, ax = plt.subplots()
     color_list = ['b', 'g', 'orange', 'c', 'm', 'y', 'k', 'w', 'r']
-    ax.set(xlim=(0, 800), ylim=(0, 800))
+    #ax.set(xlim=(0, 800), ylim=(0, 800))
     ax.imshow(rm.cpu().float(), cmap='binary')
     # ego car position
     #ax.plot(400, 400, 'x', color="red")

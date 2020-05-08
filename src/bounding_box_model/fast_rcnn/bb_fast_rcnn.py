@@ -159,6 +159,8 @@ class BBSpatialRoadMap(LightningModule):
         return old_coords
 
     def _change_coord_sys(self, boxes):
+
+        boxes = boxes * 10 + 400
         # boxes dim: [N, 2, 4]
         max_x = boxes[:, 0].max(dim=1)[0]
         min_x = boxes[:, 0].min(dim=1)[0]
@@ -166,7 +168,7 @@ class BBSpatialRoadMap(LightningModule):
         min_y = boxes[:, 1].min(dim=1)[0]
 
         # output dim: [N, 4] where each box has [x1, x2, x3, x4]
-        coords = torch.stack([min_x, min_y, max_x, max_y], dim=1)*10 + 400
+        coords = torch.stack([min_x, min_y, max_x, max_y], dim=1)
         return coords
 
     def _format_for_fastrcnn(self, images, target):
