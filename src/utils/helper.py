@@ -52,7 +52,6 @@ def log_fast_rcnn_images(self, x, pred_coords, pred_categ, target_coords, target
     self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
 
     pred_rm_w_boxes = plot_all_colour_boxes(pred_coords, pred_categ, road_image)
-    #import pdb; pdb.set_trace()
     target_rm_w_boxes = plot_all_colour_boxes(target_coords, target_categ, road_image)
 
     # for outputting the matplotlib figures
@@ -92,34 +91,34 @@ def boxes_to_binary_map(x):
     return new_data
 
 
-def log_bb_images(self, x, target_bb_plt, pred_bb_plt, step_name, limit=1):
-    # log 6 images stitched wide, target/true roadmap and predicted roadmap
-    # take first image in the batch
-    x = x[:limit]
-    input_images = torchvision.utils.make_grid(x)
-    self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
+# def log_bb_images(self, x, target_bb_plt, pred_bb_plt, step_name, limit=1):
+#     # log 6 images stitched wide, target/true roadmap and predicted roadmap
+#     # take first image in the batch
+#     x = x[:limit]
+#     input_images = torchvision.utils.make_grid(x)
+#     self.logger.experiment.add_image(f'{step_name}_input_images', input_images, self.trainer.global_step)
+#
+#     # for outputting the matplotlib figures
+#     self.logger.experiment.add_figure(f'{step_name}_target_bbs', target_bb_plt, self.trainer.global_step)
+#     self.logger.experiment.add_figure(f'{step_name}_pred_bbs', pred_bb_plt, self.trainer.global_step)
 
-    # for outputting the matplotlib figures
-    self.logger.experiment.add_figure(f'{step_name}_target_bbs', target_bb_plt, self.trainer.global_step)
-    self.logger.experiment.add_figure(f'{step_name}_pred_bbs', pred_bb_plt, self.trainer.global_step)
 
+# def draw_one_box_new(corners, color):
+#     point_squence = torch.stack([corners[:, 0], corners[:, 1], corners[:, 3], corners[:, 2], corners[:, 0]])
+#     plt.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
 
-def draw_one_box_new(corners, color):
-    point_squence = torch.stack([corners[:, 0], corners[:, 1], corners[:, 3], corners[:, 2], corners[:, 0]])
-    plt.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
-
-def plot_all_boxes_new(target):
-    # expected input has shape [100, 2, 4]
-
-    target = target.detach()
-    fig = plt.figure()
-    road_image_blank = torch.zeros(800, 800)
-    plt.imshow(road_image_blank, cmap='binary')
-    #plt.axis('off')
-    for i, bb in enumerate(target):
-        # bb = [2, 4]
-        draw_one_box_new(bb.cpu().float(), color="black")
-    return fig
+# def plot_all_boxes_new(target):
+#     # expected input has shape [100, 2, 4]
+#
+#     target = target.detach()
+#     fig = plt.figure()
+#     road_image_blank = torch.zeros(800, 800)
+#     plt.imshow(road_image_blank, cmap='binary')
+#     #plt.axis('off')
+#     for i, bb in enumerate(target):
+#         # bb = [2, 4]
+#         draw_one_box_new(bb.cpu().float(), color="black")
+#     return fig
 
 
 def convert_map_to_lane_map(ego_map, binary_lane):
