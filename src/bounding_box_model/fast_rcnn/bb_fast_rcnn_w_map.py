@@ -145,7 +145,6 @@ class FasterRCNNRoadMap(LightningModule):
                avg_bb_ts.append(ats)
 
             avg_bb_ts = avg_bb_ts.mean()
-
             # ----------------------
             # LOG VALIDATION IMAGES
             # ----------------------
