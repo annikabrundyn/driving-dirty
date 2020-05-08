@@ -141,6 +141,7 @@ class FasterRCNNRoadMap(LightningModule):
                 pred_bb = d['boxes']
                 pred_bb = self._change_to_old_coord_sys(pred_bb)
                 true_bb = raw_target[i]['bounding_box']
+                import pdb; pdb.set_trace()
                 ats = compute_ats_bounding_boxes(pred_bb, true_bb)
                 avg_bb_ts.append(ats)
 
