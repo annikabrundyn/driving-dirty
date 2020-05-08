@@ -272,18 +272,18 @@ class FasterRCNNRoadMap(LightningModule):
         return {'loss': train_loss, 'log': train_tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
+        val_loss = self.current_epoch
         self._run_step(batch, batch_idx, step_name='valid')
         #avg_bb_ts, _, _, _, _ = self._run_step(batch, batch_idx, step_name='valid')
-        #return {'val_ts': avg_bb_ts}
+        return {'val_loss': val_loss}
 
-    #def validation_epoch_end(self, outputs):
-    #    try:
-    #        avg_val_bb_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
-    #    except Exception as e:
-    #        avg_val_bb_ts = torch.tensor(0)
-    #
-    #    val_tensorboard_logs = {'avg_val_bb_ts': avg_val_bb_ts}
-    #    return {'log': val_tensorboard_logs}
+    def validation_epoch_end(self, outputs):
+       #try:
+       #    avg_val_bb_ts = torch.stack([x['val_ts'] for x in outputs]).mean()
+       #except Exception as e:
+       #    avg_val_bb_ts = torch.tensor(0)
+       val_loss = self.current_epoch
+       return {'val_loss': val_loss}
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
