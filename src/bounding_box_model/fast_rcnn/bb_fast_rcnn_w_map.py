@@ -14,7 +14,7 @@ from test_tube import HyperOptArgumentParser
 
 from src.utils.data_helper import LabeledDataset
 from src.utils import helper
-from src.utils.helper import collate_fn, boxes_to_binary_map, compute_ts_road_map, log_fast_rcnn_images
+from src.utils.helper import collate_fn, boxes_to_binary_map, compute_ats_bounding_boxes, log_fast_rcnn_images
 from src.autoencoder.autoencoder import BasicAE
 from src.bounding_box_model.spatial_bb.components import SpatialMappingCNN, RoadMapBoxesMergingCNN
 
@@ -141,7 +141,7 @@ class FasterRCNNRoadMap(LightningModule):
                 pred_bb = d['boxes']
                 pred_bb = self._change_to_old_coord_sys(pred_bb)
                 true_bb = raw_target[i]['bounding_box']
-                ats = compute_ts_road_map(pred_bb, true_bb)
+                ats = compute_ats_bounding_boxes(pred_bb, true_bb)
                 avg_bb_ts.append(ats)
 
             avg_bb_ts = avg_bb_ts.mean()
