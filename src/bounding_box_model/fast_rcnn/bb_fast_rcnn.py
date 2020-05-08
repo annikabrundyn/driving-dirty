@@ -13,6 +13,7 @@ from pytorch_lightning import LightningModule, Trainer
 from test_tube import HyperOptArgumentParser
 
 from src.utils.data_helper import LabeledDataset
+from src.utils import helper
 from src.utils.helper import collate_fn, boxes_to_binary_map, compute_ts_road_map, log_fast_rcnn_images
 from src.autoencoder.autoencoder import BasicAE
 from src.bounding_box_model.spatial_bb.components import SpatialMappingCNN, RoadMapBoxesMergingCNN
@@ -94,18 +95,16 @@ class BBSpatialRoadMap(LightningModule):
         images, target, road_image = batch
 
         # 6 images to 1 long one
-        images = torch.stack(images, dim=0)
-        images = self.wide_stitch_six_images(images)
+        square_images = helper.layout_images_as_map(images)
 
         # adjust format for FastRCNN
-        images, target = self._format_for_fastrcnn(images, target)
+        images, target = self._format_for_fastrcnn(square_images, target)
 
         # aggregate losses
         losses = self(images, target)
 
         # log images
         #if batch_idx % self.hparams.output_img_freq == 0:
-
 
         # in training, the output is a dict of scalars
         if step_name == 'train':

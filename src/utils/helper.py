@@ -9,6 +9,40 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Polygon
 
 from PIL import Image, ImageDraw
+from kornia.geometry import transform
+
+
+def layout_images_as_map(sample):
+    """
+    Input: list of images [(6, 3, 256, 326), (6, 3, 256, 326), ..., (6, C, H, W)]
+    Output: (b, 3, 800, 800)
+    """
+    sample = torch.stack(sample, dim=0)
+
+    fl = sample[:, 0, ...]
+    br = sample[:, 3, ...]
+
+    f = sample[:, 1, ...]
+    f = torch.rot90(f, 3, [2, 3])
+
+    b = sample[:, 4, ...]
+    b = torch.rot90(b, 1, [2, 3])
+
+    bl = sample[:, 5, ...]
+    bl = torch.rot90(bl, 2, [2, 3])
+
+    fr = sample[:, 2, ...]
+    fr = torch.rot90(fr, 2, [2, 3])
+
+    white = torch.ones(fr.size(0), 3, 306, 100)
+
+    top = torch.cat([br, fl], dim=-1)
+    mid = torch.cat([b, white, f], dim=-1)
+    bottom = torch.cat([bl, fr], dim=-1)
+
+    x = torch.cat([top, mid, bottom], dim=-2)
+    x = transform.resize(x, size=(800, 800))
+    return x
 
 
 def log_fast_rcnn_images(self, x, pred_coords, pred_categ, target_coords, target_categ, road_image, step_name):
@@ -167,7 +201,7 @@ def compute_ts_road_map(road_map1, road_map2):
 def compute_iou(box1, box2):
     a = Polygon(torch.t(box1)).convex_hull
     b = Polygon(torch.t(box2)).convex_hull
-    
+
     return a.intersection(b).area / a.union(b).area
 
 
