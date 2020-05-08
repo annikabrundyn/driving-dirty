@@ -227,6 +227,9 @@ class FasterRCNNRoadMap(LightningModule):
 
         # output dim: [N, 4] where each box has [x1, x2, x3, x4]
         coords = torch.stack([min_x, min_y, max_x, max_y], dim=1)
+        debug_coords = coords.view(-1)
+        if debug_coords.min() <= 0:
+            import pdb; pdb.set_trace()
         return coords
 
     def _format_for_fastrcnn(self, images, target, road_image):
