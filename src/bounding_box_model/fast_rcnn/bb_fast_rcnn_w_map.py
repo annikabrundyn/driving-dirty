@@ -39,24 +39,13 @@ class Backbone(nn.Module):
         self.ae = self.ae.encoder
         self.ae.c3_only = True
 
-        self.rm_conv_1 = nn.Conv2d(1, 32, kernel_size=7, stride=3, dilation=3, padding=1)
-        self.rm_conv_2 = nn.Conv2d(32, 32, kernel_size=3, stride=1, dilation=3)
 
     def forward(self, x):
-        import pdb; pdb.set_trace()
-        images = x[:, 0:3, ...]
-        rm = x[:, -1, ...]
 
         # self sup reps
-        ssr = self.ae(images)
+        ssr = self.ae(x)
+        return ssr
 
-        # road map
-        rm = F.relu(self.rm_conv_1(rm))
-        rm = F.relu(self.rm_conv_2(rm))
-
-        x = torch.cat([ssr, rm], dim=1)
-
-        return x
 
 
 class BBSpatialRoadMap(LightningModule):
