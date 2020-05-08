@@ -207,7 +207,7 @@ class BBSpatialRoadMap(LightningModule):
         new_images = []
         for image, road_img in zip(images, road_image):
             image = torch.cat([image, road_img.unsqueeze(0)], dim=0).float()
-            image = self.mapper_cnn(image)
+            image = self.mapper_cnn(image.unsqueeze(0))
             new_images.append(image)
 
         target = [{k: v for k, v in t.items()} for t in target]
