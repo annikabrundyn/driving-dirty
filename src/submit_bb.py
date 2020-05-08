@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     parser = HyperOptArgumentParser(add_help=False, strategy='grid_search')
     parser = Trainer.add_argparse_args(parser)
-    parser.add_argument('--model', type=str, default='faster_rcnn')
+    parser.add_argument('--model', type=str, default='faster_rcnn_rm')
 
     (temp_args, arr) = parser.parse_known_args()
     model_name = temp_args.model
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--nodes', type=int, default=1)
     parser.add_argument('--conda_env', type=str, default='driving-dirty')
     parser.add_argument('--on_cluster', default=True, action='store_true')
-    parser.add_argument('-n', '--tt_name', default='frcnn2_no_rm')
+    parser.add_argument('-n', '--tt_name', default='frcnn2_w_rm')
     parser.add_argument('-d', '--tt_description', default='pretrained ae for feature extraction')
     parser.add_argument('--logs_save_path', default='/scratch/ab8690/logs')
     parser.add_argument('--single_run', dest='single_run', action='store_true')
