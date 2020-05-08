@@ -117,11 +117,6 @@ class BasicAE(LightningModule):
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
-        if scheduler: 
-            optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
-            scheduler_ = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,patience=10)
-            return [optimizer], [scheduler_]
-        if not scheduler: 
             return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
 
     def prepare_data(self):
@@ -183,7 +178,6 @@ class BasicAE(LightningModule):
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         #parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         parser.add_argument('--output_img_freq', type=int, default=500)
-        parser.add_argument('--scheduler',type=bool,default=True)
         return parser
 
 

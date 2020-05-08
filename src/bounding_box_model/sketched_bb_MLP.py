@@ -26,7 +26,7 @@ from test_tube import HyperOptArgumentParser
 from src.utils.helper import collate_fn, plot_image, log_bb_images, plot_all_boxes_new
 from src.utils.data_helper import LabeledDataset
 
-from src.noah_data import sketch_regions
+from src.noah_data.sketch_regions import sketch_regions
 from src.autoencoder.autoencoder import BasicAE
 
 import matplotlib
@@ -209,8 +209,9 @@ class Boxes(LightningModule):
         parser.add_argument('--max_bb', type=int, default=100)
 
         # fixed arguments
-        parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
-        parser.add_argument('--pretrained_path', type=str, default='/Users/annika/Developer/driving-dirty/lightning_logs/version_3/checkpoints/epoch=4.ckpt')
+        parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
+#        parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
+        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/space_bb_pretrain/lightning_logs/version_9604234/checkpoints/epoch=23.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=1000)
 
         return parser
