@@ -135,16 +135,22 @@ class FasterRCNNRoadMap(LightningModule):
 
         # in val, the output is a dic of boxes and losses
         else:
-            # we want to calculate validation performance
-            avg_bb_ts = []
-            for i, d in enumerate(losses):
-                pred_bb = d['boxes']
-                pred_bb = self._change_to_old_coord_sys(pred_bb)
-                true_bb = raw_target[i]['bounding_box']
-                ats = compute_ats_bounding_boxes(pred_bb, true_bb)
-                avg_bb_ts.append(ats)
+            if 0 < batch_idx < 5:
+                # we want to calculate validation performance
+                avg_bb_ts = []
+                for i, d in enumerate(losses):
+                    try:
+                        pred_bb = d['boxes']
+                        pred_bb = self._change_to_old_coord_sys(pred_bb)
+                        true_bb = raw_target[i]['bounding_box']
+                        ats = compute_ats_bounding_boxes(pred_bb, true_bb)
+                        avg_bb_ts.append(ats)
 
-            avg_bb_ts = torch.mean(torch.stack(avg_bb_ts))
+                    except Exception as e:
+                        pass
+
+                avg_bb_ts = torch.mean(torch.stack(avg_bb_ts))
+
             # ----------------------
             # LOG VALIDATION IMAGES
             # ----------------------
