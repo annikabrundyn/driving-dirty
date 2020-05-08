@@ -129,13 +129,16 @@ def convert_map_to_lane_map(ego_map, binary_lane):
         return (~ mask)
     return ego_map * (~ mask.view(1, ego_map.shape[1], ego_map.shape[2]))
 
+
 def convert_map_to_road_map(ego_map):
     mask = (ego_map[0,:,:] == 1) * (ego_map[1,:,:] == 1) * (ego_map[2,:,:] == 1)
 
     return (~mask)
 
+
 def collate_fn(batch):
     return tuple(zip(*batch))
+
 
 def draw_box(ax, corners, color):
     point_squence = torch.stack([corners[:, 0], corners[:, 1], corners[:, 3], corners[:, 2], corners[:, 0]])
@@ -144,6 +147,7 @@ def draw_box(ax, corners, color):
     # Add 400, since the center of the image is at pixel (400, 400)
     # The negative sign is because the y axis is reversed for matplotlib
     ax.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
+
 
 def compute_ats_bounding_boxes(boxes1, boxes2):
     # boxes1, boxes2 have dim [num_boxes, 2, 4]
@@ -206,58 +210,5 @@ def compute_iou(box1, box2):
 
 
 
-##### THESE ARE NOT NEEDED
-def plot_image(target):
-    # expected input has shape(100, 2, 4)
 
-    target = target.detach()
-    fig, ax = plt.subplots()
-    road_image_ex = torch.zeros(800, 800)
-    _ = plt.imshow(road_image_ex, cmap='binary')
-
-    for i, bb in enumerate(target):
-        # bb = (2, 4)
-        # You can check the implementation of the draw box to understand how it works
-        draw_boxs(ax, bb.cpu().float(), color="black")
-
-    img_data = fig2data(fig)
-    img_data = img_data[120: -125, 135:-109]
-
-    img_data = torch.tensor(img_data).type_as(target)
-
-    # (755, 756, 4) -> (1, 755, 756)
-    img_data = img_data[:, :, 0].unsqueeze(0)
-
-    # (c, h, w) -> (b, c, h, w)
-    img_data = img_data.unsqueeze(0)
-
-    return img_data
-
-
-def fig2data(fig):
-    """
-    @brief Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it
-    @param fig a matplotlib figure
-    @return a numpy 3D array of RGBA values
-    """
-    # draw the renderer
-    fig.canvas.draw()
-
-    # Get the RGBA buffer from the figure
-    w, h = fig.canvas.get_width_height()
-    buf = np.fromstring(fig.canvas.tostring_argb(), dtype=np.uint8)
-    buf.shape = (w, h, 4)
-
-    # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
-    buf = np.roll(buf, 3, axis=2)
-    return buf
-
-
-def draw_boxs(ax, corners, color):
-    point_squence = torch.stack([corners[:, 0], corners[:, 1], corners[:, 3], corners[:, 2], corners[:, 0]])
-
-    # the corners are in meter and time 10 will convert them in pixels
-    # Add 400, since the center of the image is at pixel (400, 400)
-    # The negative sign is because the y axis is reversed for matplotlib
-    plt.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
 
