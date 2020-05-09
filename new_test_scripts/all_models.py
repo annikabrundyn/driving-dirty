@@ -287,7 +287,7 @@ class DenseBlock(nn.Module):
 
 ##################### ROADMAP ############################
 
-class RoadMapBCE(LightningModule):
+class RoadMap(LightningModule):
 
     def __init__(self, hparams):
         super().__init__()
