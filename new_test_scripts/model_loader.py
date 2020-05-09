@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torchvision
 
 # import your model class
-from all_models import RoadMap
+from all_models import RoadMap, FasterRCNNRoadMap
 from argparse import Namespace
 
 # Put your transform function here, we will use it for our dataloader
@@ -43,6 +43,7 @@ class ModelLoader():
         # samples is a cuda tensor with size [batch_size, 6, 3, 256, 306]
         # You need to return a tuple with size 'batch_size' and each element is a cuda tensor [N, 2, 4]
         # where N is the number of object
+
         return torch.rand(1, 15, 2, 4) * 10
 
     def get_binary_road_map(self, samples):
