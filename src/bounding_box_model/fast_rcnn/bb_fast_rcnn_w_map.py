@@ -120,8 +120,6 @@ class FasterRCNNRoadMap(LightningModule):
         images, target = self._format_for_fastrcnn(images, raw_target, road_image)
 
         # aggregate losses
-        if step_name == 'train' and self.hparams.debug:
-            import pdb; pdb.set_trace()
         losses = self(images, target)
 
         # log images
@@ -162,6 +160,10 @@ class FasterRCNNRoadMap(LightningModule):
                 ### --- log one validation predicted image ---
                 # [N, 4]
                 # range: (0, 800)
+                if self.hparams.debug:
+                    import pdb
+                    pdb.set_trace()
+
                 predicted_coords_0 = losses[0]['boxes']
 
                 # TODO: is this correct?
@@ -218,9 +220,6 @@ class FasterRCNNRoadMap(LightningModule):
     def  _old_to_new_coord(self, input_boxes):
 
         boxes = input_boxes.clone()
-
-        if self.hparams.debug:
-            import pdb; pdb.set_trace()
 
         # rescale coordinate system from (-40, 40)x(-40,40) --> (0, 800)x(800, 0)
         boxes[:,0] = (boxes[:,0] * 10) + 400
