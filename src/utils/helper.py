@@ -62,8 +62,8 @@ def log_fast_rcnn_images(self, x, pred_coords, pred_categ, target_coords, target
 def plot_all_colour_boxes(coords, categories, rm):
     fig, ax = plt.subplots()
     color_list = ['b', 'g', 'orange', 'c', 'm', 'y', 'k', 'w', 'r']
-    ax.set(xlim=(0, 800), ylim=(0, 800))
-    ax.imshow(rm.cpu().float(), cmap='binary')
+
+    plt.imshow(rm.cpu().float(), cmap='binary')
     # ego car position
     #ax.plot(400, 400, 'x', color="red")
     for i, bb in enumerate(coords):
@@ -145,7 +145,7 @@ def draw_box(ax, corners, color):
     # the corners are in meter and time 10 will convert them in pixels
     # Add 400, since the center of the image is at pixel (400, 400)
     # The negative sign is because the y axis is reversed for matplotlib
-    ax.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
+    plt.plot(point_squence.T[0] * 10 + 400, -point_squence.T[1] * 10 + 400, color=color)
 
 
 def compute_ats_bounding_boxes(boxes1, boxes2):
