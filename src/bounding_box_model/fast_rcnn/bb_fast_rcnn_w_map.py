@@ -120,7 +120,7 @@ class FasterRCNNRoadMap(LightningModule):
         images, target = self._format_for_fastrcnn(images, raw_target, road_image)
 
         # aggregate losses
-        if step_name == 'train':
+        if step_name == 'train' and self.hparams.debug:
             import pdb; pdb.set_trace()
         losses = self(images, target)
 
@@ -218,7 +218,10 @@ class FasterRCNNRoadMap(LightningModule):
     def  _old_to_new_coord(self, input_boxes):
 
         boxes = input_boxes.clone()
-        import pdb; pdb.set_trace()
+
+        if self.hparams.debug:
+            import pdb; pdb.set_trace()
+
         # rescale coordinate system from (-40, 40)x(-40,40) --> (0, 800)x(800, 0)
         boxes[:,0] = (boxes[:,0] * 10) + 400
         boxes[:, 1] = (boxes[:, 1] * -10) + 400
@@ -353,6 +356,7 @@ class FasterRCNNRoadMap(LightningModule):
         parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/space_bb_pretrain/lightning_logs/version_9604234/checkpoints/epoch=23.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=100)
 
+        parser.add_argument('--debug', default=False, action='store_true')
         parser.add_argument('--mse_loss', default=False, action='store_true')
         return parser
 
