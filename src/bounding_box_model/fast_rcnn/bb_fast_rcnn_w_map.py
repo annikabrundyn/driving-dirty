@@ -160,9 +160,6 @@ class FasterRCNNRoadMap(LightningModule):
                 ### --- log one validation predicted image ---
                 # [N, 4]
                 # range: (0, 800)
-                if self.hparams.debug:
-                    import pdb
-                    pdb.set_trace()
 
                 predicted_coords_0 = losses[0]['boxes']
 
