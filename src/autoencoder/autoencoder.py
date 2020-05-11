@@ -10,7 +10,7 @@ from test_tube import HyperOptArgumentParser
 import numpy as np
 import random
 
-from src.autoencoder.components import Encoder, Decoder
+from src.autoencoder.components import Encoder, Decoder #here's the diff.
 from src.utils.data_helper import UnlabeledDataset
 
 random.seed(20200505)
@@ -117,7 +117,7 @@ class BasicAE(LightningModule):
         return {'val_loss': avg_val_loss, 'log': val_tensorboard_logs}
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+            return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
 
     def prepare_data(self):
         image_folder = self.hparams.link
@@ -161,11 +161,11 @@ class BasicAE(LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = HyperOptArgumentParser(parents=[parent_parser], add_help=False)
-        parser.opt_list('--hidden_dim', type=int, default=128, options=[128], tunable=False,
+        parser.opt_list('--hidden_dim', type=int, default=256, options=[256,128], tunable=False,
                             help='itermediate layers dimension before embedding for default encoder/decoder')
-        parser.opt_list('--latent_dim', type=int, default=64, options=[64, 128], tunable=True,
+        parser.opt_list('--latent_dim', type=int, default=128, options=[64, 128], tunable=True,
                             help='dimension of latent variables z')
-        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-2, 1e-3, 1e-4, 1e-5], tunable=True)
+        parser.opt_list('--learning_rate', type=float, default=0.001, options=[1e-3, 1e-4, 1e-5], tunable=True)
 
         parser.opt_list('--batch_size', type=int, default=16, options=[16], tunable=False)
 
@@ -178,6 +178,7 @@ class BasicAE(LightningModule):
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
         #parser.add_argument('--link', type=str, default='/Users/annika/Developer/driving-dirty/data')
         parser.add_argument('--output_img_freq', type=int, default=500)
+        
         return parser
 
 

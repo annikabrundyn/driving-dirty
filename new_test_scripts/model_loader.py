@@ -9,32 +9,35 @@ import torch.nn.functional as F
 import torchvision
 
 # import your model class
-# import ...
+from all_models import RoadMap, FasterRCNNRoadMap
+from argparse import Namespace
 
 # Put your transform function here, we will use it for our dataloader
 # For bounding boxes task
 def get_transform_task1(): 
     return torchvision.transforms.ToTensor()
+
 # For road map task
 def get_transform_task2(): 
     return torchvision.transforms.ToTensor()
 
 class ModelLoader():
     # Fill the information for your team
-    team_name = 'team_name'
-    team_number = 1
+    team_name = 'latent_registration'
+    team_number = 37
     round_number = 1
-    team_member = []
+    team_member = ['ab8690', 'fg746', 'nsk367']
     contact_email = '@nyu.edu'
 
     def __init__(self, model_file='put_your_model_file(or files)_name_here'):
-        # You should 
-        #       1. create the model object
-        #       2. load your state_dict
-        #       3. call cuda()
-        # self.model = ...
-        # 
-        pass
+        args = dict(
+            rm_ckpt_path="./rm.ckpt"
+        )
+        hparams = Namespace(**args)
+
+        self.model = RoadMap.load_from_checkpoint(hparams.rm_ckpt_path, map_location=torch.device('cpu'))
+        self.model.cuda(0)
+        self.model.freeze()
 
     def get_bounding_boxes(self, samples):
         # samples is a cuda tensor with size [batch_size, 6, 3, 256, 306]
@@ -46,5 +49,7 @@ class ModelLoader():
     def get_binary_road_map(self, samples):
         # samples is a cuda tensor with size [batch_size, 6, 3, 256, 306]
         # You need to return a cuda tensor with size [batch_size, 800, 800] 
-        
-        return torch.rand(1, 800, 800) > 0.5
+        #roadmap = self.model(samples)
+        roadmap = self.model(samples.cuda(0))
+        roadmap = roadmap > 0.5
+        return roadmap

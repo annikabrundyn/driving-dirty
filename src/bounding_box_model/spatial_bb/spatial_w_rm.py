@@ -44,6 +44,7 @@ class BBSpatialRoadMap(LightningModule):
         #self.ae = BasicAE(hparams2)
         self.frozen = True
         self.ae.freeze()
+        self.ae.encoder.c3_only = True
         self.ae.decoder = None
 
         self.space_map_cnn = SpatialMappingCNN()
@@ -72,7 +73,7 @@ class BBSpatialRoadMap(LightningModule):
         # x:[b, 6, 3, 256, 306] -> x:[b, 3, 256, 1836]
         x = self.wide_stitch_six_images(x)
         # [b, 3, 256, 1836] -> ssr: [b, 32, 128, 918]
-        ssr = self.ae.encoder(x, c3_only=True)
+        ssr = self.ae.encoder(x)
 
         # combine all three to be -> [b, 1, 800, 800]
         yhat = self.box_merge(ssr, space_rep, rm)
@@ -220,9 +221,9 @@ class BBSpatialRoadMap(LightningModule):
         parser.add_argument('--batch_size', type=int, default=16)
         # fixed arguments
         parser.add_argument('--link', type=str, default='/scratch/ab8690/DLSP20Dataset/data')
-        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/dd_pretrain_ae/lightning_logs/version_9234267/checkpoints/epoch=42.ckpt')
+        parser.add_argument('--pretrained_path', type=str, default='/scratch/ab8690/logs/space_bb_pretrain/lightning_logs/version_9604234/checkpoints/epoch=23.ckpt')
         parser.add_argument('--output_img_freq', type=int, default=500)
-        parser.add_argument('--unfreeze_epoch_no', type=int, default=20)
+        parser.add_argument('--unfreeze_epoch_no', type=int, default=0)
 
         parser.add_argument('--mse_loss', default=False, action='store_true')
         return parser
