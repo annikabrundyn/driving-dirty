@@ -1,6 +1,6 @@
 # End-to-end Multi-Camera View Parsing to Top-Down Object Detection on Roadmaps
 
-The goal of this project was to construct a top down view of a road-map and the objects surrounding an ego car using six images taken from a camera mounted on top of a car. We use self-supervised learning to build a representation using a large unlabeled dataset and fine-tune on two downstream tasks, roadmap prediction and bounding box detection. Our approach achieves a roadmap threat score of $0.76$, and identifies objects with a bounding box intersection over union (IoU) threat score of $0.007$. The most obvious use case of this model would be for safe and efficient route planning in autonomous vehicles.
+The goal of this project was to construct a top down view of a road-map and the objects surrounding an ego car using six images taken from a camera mounted on top of a car. We use self-supervised learning to build a representation using a large unlabeled dataset and fine-tune on two downstream tasks, roadmap prediction and bounding box detection. The most obvious use case of this model would be for safe and efficient route planning in autonomous vehicles.
 
 Here is a [3 minute presentation](https://youtu.be/CPdzVIb4RZI) in which I discuss the final model approach taken.
 
