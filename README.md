@@ -7,8 +7,8 @@ Here is a [3 minute presentation](https://youtu.be/CPdzVIb4RZI) in which I discu
 # Dataset
 The input to the model consists of 6 pictures of a scene taken from 6 cameras mounted on top of the car. The target is a top-down view, or bird's eye view, of the roadmap area surrounding the car, as well as labelled bounding boxes for each of the objects surrounding the car.
 
-Example of an input/output pair:
-![alt text][example]
+Example of an input/output pair: \\
+![alt text][example] 
 
 [example]: https://github.com/annikabrundyn/driving-dirty/blob/master/example.png 
 
